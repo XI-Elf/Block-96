@@ -1,35 +1,36 @@
 # BLOCK-96
 
-Тактический экстракшен-шутер (изометрическая камера) с RPG-элементами в постсоветском промышленном городе 2003 года, через семь лет после технологической катастрофы 1996 года.
+A tactical extraction shooter with RPG elements set in a post-Soviet industrial city in 2003, seven years after the technological catastrophe of 1996.
 
-**Статус:** ранняя разработка. Движок Godot 4 (GDScript). Сначала полностью одиночная игра с сохранениями на устройстве, потом кооп с хостом-игроком. См. [docs/DECISIONS.md](docs/DECISIONS.md).
+**Status:** early development. Engine: Godot 4 (GDScript). Single-player first, with saves on the player's device; co-op (host = one player's computer) comes later. See [docs/DECISIONS.md](docs/DECISIONS.md).
 
-## Сеттинг
-Панельки, гаражи, ларьки, самодельный кибер-тех. Город разделён на районы под патрулём властей, нейтральные зоны и спорные территории под бандами игроков. Река делит город; ключевые переходы — мосты и блокпосты.
+## Setting
+Panel blocks, garages, kiosks, and jury-rigged cyber-tech. The city is split into districts under authority patrols, neutral zones, and contested territories held by player gangs. A river divides the city; the key crossings are bridges with checkpoints.
 
-## Экономика
-Перепрограммированные пластиковые жетоны метро («энергетические токены»): торговля, оплата удержания территории, зарядка имплантов, турникеты.
+## Economy
+Reprogrammed metro tokens ("energy tokens"): trading, paying upkeep on territory marks, charging implants, and unlocking turnstiles.
 
-## Вертикаль
-Координаты (X, Y, Layer): +16 (высотки, крыши) … 0 (улицы, дворы, промзоны) … -1 (метро, подземный трамвай) … -2 (канализация, коллекторы). См. [data/rules/layers.json](data/rules/layers.json).
+## Vertical map
+Coordinates are (X, Y, N), where N is the layer number: +1..+16 (high-rises, roofs), 0 (streets, courtyards, industrial zones), -1 (metro, underground tram), -2 (sewers, collectors). See [data/rules/layers.json](data/rules/layers.json).
 
-## Территории
-Территория не привязана к границам районов: невидимая 3D-сетка клеток (X, Y, Layer). Метки можно ставить только на заранее размещённые контрольные точки. Размеры: киоск 2×2, гараж 3×3, дверь квартиры 3×3, ворота дома 5×5, мурал банды 15×15+. Соседние точки одной группы сливаются в полигон. Метка держится на токенах; без токенов сигнал гаснет и метку можно перекрасить. Окна уязвимости — во время отключений электричества. См. [data/rules/territory.json](data/rules/territory.json).
+## Territory
+Territory is not bound to district borders: it lives on an invisible 3D cell grid (X, Y, N). Marks can only be placed on pre-placed control points. Sizes: kiosk 2×2, garage 3×3, apartment door 3×3, house gate 5×5, gang mural 15×15+. Adjacent points of one group merge into a polygon. A mark is held by tokens; without tokens the signal fades and the mark can be painted over. Vulnerability windows occur during power outages. See [data/rules/territory.json](data/rules/territory.json).
 
-Стратегические точки (метро, ТЭЦ, мосты, недостроенные высотки) — арены PvPvE, не жилые зоны.
+Strategic points (metro, power plants, bridges, unfinished high-rises) are PvPvE arenas, not residential zones.
 
-## Игровой цикл
-Разведка и сбор → тактический бой (конусы видимости, звук через этажи и туннели, моддинг оружия) → кооп или предательство во временных отрядах → укрепление или экспансия.
+## Gameplay loop
+Scout and loot → tactical combat (vision cones, sound through floors and tunnels, weapon modding) → co-op or betrayal in temporary squads → fortify or expand.
 
-## Структура
-- `docs/` — дизайн и решения
-- `data/world/` — районы, блокпосты, карта
-- `data/rules/` — слои Z, правила территорий
-- `src/`, `assets/`, `tools/` — код, ресурсы, утилиты (пока пусто)
+## Layout
+- `docs/` — design and decisions
+- `data/world/` — districts, checkpoints, map
+- `data/rules/` — layers, territory rules
+- `data/levels/` — playable levels (generated)
+- `src/` — game code (GDScript); `tests/` — logic tests; `tools/` — generators; `assets/` — resources
 
-Сеттинг оригинальный; названия, персонажей и арт существующих игр не используем.
+## Run
+Requires Godot 4.3. Open the project folder in the editor and press F5, or run `godot --path .`.
+Logic tests: `godot --headless -s tests/run_tests.gd` (expect `RESULT: OK`).
+Controls: WASD move, LMB fire, R reload, F5/F9 save/load.
 
-## Запуск
-Нужен Godot 4.3. Открыть папку проекта в редакторе и запустить (F5), либо `godot --path .`.
-Тесты логики: `godot --headless -s tests/run_tests.gd` (ожидается `ИТОГ: OK`).
-Управление: WASD ход, ЛКМ огонь, R перезарядка, F5/F9 сохранить/загрузить.
+The setting is original; we do not reuse names, characters, or art from existing games.

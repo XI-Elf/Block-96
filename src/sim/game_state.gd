@@ -1,11 +1,11 @@
 class_name GameState
 extends RefCounted
-## Симуляция Block-96. Не знает про узлы, отрисовку и ввод: принимает только команды.
-## Команда: {"pid": int, "move": Vector2, "aim": Vector2 (точка в метрах), "fire": bool, "reload": bool}
-## Это нужно, чтобы позже хост-игрок мог принимать такие же команды от других игроков.
+## Block-96 simulation. Knows nothing about nodes, rendering or input: it accepts commands only.
+## Command: {"pid": int, "move": Vector2, "aim": Vector2 (point in metres), "fire": bool, "reload": bool}
+## This lets a host player later accept the same commands from other players.
 
 const PLAYER_RADIUS := 0.4
-const PLAYER_SPEED := 4.0 # м/с
+const PLAYER_SPEED := 4.0 # m/s
 const FIRE_INTERVAL := 0.15
 const MAG_SIZE := 12
 const RELOAD_TIME := 1.2
@@ -14,9 +14,9 @@ const MAX_RANGE := 40.0
 var tick := 0
 var time := 0.0
 var rng := RandomNumberGenerator.new()
-var walls: Array[Rect2] = [] # метры, не сохраняются (берутся из уровня)
-var water: Array[PackedVector2Array] = [] # непроходимая вода
-var walkable: Array[PackedVector2Array] = [] # мосты над водой
+var walls: Array[Rect2] = [] # metres, not saved (taken from the level)
+var water: Array[PackedVector2Array] = [] # impassable water
+var walkable: Array[PackedVector2Array] = [] # bridges over water
 var players: Dictionary = {} # pid -> Dictionary
 var events: Array = []
 
@@ -106,7 +106,7 @@ func hits_wall(pos: Vector2) -> bool:
 	return false
 
 
-## Расстояние до первой стены вдоль луча (или max_dist).
+## Distance to the first wall along the ray (or max_dist).
 func ray_cast(origin: Vector2, dir: Vector2, max_dist: float) -> float:
 	var best := max_dist
 	for r in walls:

@@ -1,5 +1,5 @@
 extends Node2D
-## Клиент одиночной игры: ввод -> команда -> GameState.step -> отрисовка.
+## Single-player client: input -> command -> GameState.step -> rendering.
 
 const LEVEL_PATH := "res://data/levels/pavlov_yar.json"
 const PLAYER_ID := 1
@@ -21,6 +21,7 @@ func _ready() -> void:
 	state.walkable = level.walkable
 	state.add_player(PLAYER_ID, level.spawn)
 	camera = Camera2D.new()
+	camera.zoom = Vector2(0.6, 0.6) # zoomed out so the high-rises are visible at once
 	add_child(camera)
 	var layer := CanvasLayer.new()
 	hud = Label.new()
@@ -58,15 +59,14 @@ func _process(_dt: float) -> void:
 	var p: Dictionary = state.players[PLAYER_ID]
 	camera.position = Iso.to_screen(p.pos)
 	aim_point = Iso.to_world(get_global_mouse_position())
-	hud.text = "HP %d   Патроны %d/%d%s   [WASD] ход  [ЛКМ] огонь  [R] перезарядка  [F5] сохранить  [F9] загрузить" % [
-		p.hp, p.ammo, GameState.MAG_SIZE, "  перезарядка…" if p.reload > 0.0 else ""]
+	hud.text = "HP %d   Ammo %d/%d%s   [WASD] move  [LMB] fire  [R] reload  [F5] save  [F9] load" % [
+		p.hp, p.ammo, GameState.MAG_SIZE, "  reloading..." if p.reload > 0.0 else ""]
 	queue_redraw()
 
 
 func _read_move() -> Vector2:
 	var v := Vector2.ZERO
-	# Управление в мировых осях: W = на север карты (-y), экранно это вверх-вправо.
-	# Сдвигаем так, чтобы W шло «вверх по экрану».
+	# Controls are remapped so that W moves up on the screen (world axes are rotated 45 degrees).
 	if Input.is_physical_key_pressed(KEY_W): v += Vector2(-1, -1)
 	if Input.is_physical_key_pressed(KEY_S): v += Vector2(1, 1)
 	if Input.is_physical_key_pressed(KEY_A): v += Vector2(-1, 1)
@@ -113,19 +113,23 @@ func _draw() -> void:
 	for br in level.bridges:
 		for poly in br.polys:
 			_fill(poly, Color("736a60"))
-	# здания, барьеры, будки и игрок — в порядке глубины (грубая сортировка по x+y)
+	# buildings, barriers, booths and the player in depth order (rough sort by x+y)
 	var items: Array = []
 	for b in level.buildings:
 		items.append({"key": b.rect.end.x + b.rect.end.y, "b": b})
 	var p: Dictionary = state.players[PLAYER_ID]
 	items.append({"key": p.pos.x + p.pos.y + 1.0, "player": true})
 	items.sort_custom(func(a, b): return a.key < b.key)
+	var player_screen := Iso.to_screen(p.pos)
+	var player_key: float = p.pos.x + p.pos.y + 1.0
 	for it in items:
 		if it.has("b"):
-			_draw_building(it.b)
+			# fade buildings that stand in front of the player and cover them on the screen
+			var fade: bool = it.key > player_key and _screen_box(it.b).has_point(player_screen)
+			_draw_building(it.b, 0.3 if fade else 1.0)
 		else:
 			_draw_player(p)
-	# силуэт игрока поверх зданий, если он за ними
+	# player silhouette on top of buildings when hidden behind them
 	draw_circle(Iso.to_screen(p.pos), 9.0, Color(1, 1, 1, 0.35))
 	for t in tracers:
 		draw_line(Iso.to_screen(t.from), Iso.to_screen(t.to), Color(1, 1, 1, 0.9), 2.0)
@@ -136,12 +140,23 @@ const KIND_COLORS := {
 	"house": [Color("3a3f55"), Color("2c3045"), Color("4b5170")],
 	"garage_row": [Color("45454f"), Color("33333c"), Color("585865")],
 	"shed": [Color("4a3f3a"), Color("372f2b"), Color("5e504a")],
+	"panel": [Color("6b7388"), Color("4f566b"), Color("8a93a8")],
 	"barrier": [Color("7a2f2f"), Color("5a2222"), Color("9a4040")],
 	"booth": [Color("55604a"), Color("3f4837"), Color("6d7a5e")],
 }
 
 
-func _draw_building(b: Dictionary) -> void:
+func _screen_box(b: Dictionary) -> Rect2:
+	var r: Rect2 = b.rect
+	var top: float = -b.h * Iso.PX_PER_M_HEIGHT
+	var left := Iso.to_screen(Vector2(r.position.x, r.end.y)).x
+	var right := Iso.to_screen(Vector2(r.end.x, r.position.y)).x
+	var up: float = Iso.to_screen(r.position).y + top
+	var down := Iso.to_screen(r.end).y
+	return Rect2(left, up, right - left, down - up)
+
+
+func _draw_building(b: Dictionary, alpha: float = 1.0) -> void:
 	var r: Rect2 = b.rect
 	var cols: Array = KIND_COLORS.get(b.kind, KIND_COLORS.house)
 	var h := Vector2(0, -b.h * Iso.PX_PER_M_HEIGHT)
@@ -149,9 +164,11 @@ func _draw_building(b: Dictionary) -> void:
 	var bb := Iso.to_screen(Vector2(r.end.x, r.position.y))
 	var c := Iso.to_screen(r.end)
 	var d := Iso.to_screen(Vector2(r.position.x, r.end.y))
-	draw_colored_polygon(PackedVector2Array([d, c, c + h, d + h]), cols[0])
-	draw_colored_polygon(PackedVector2Array([bb, c, c + h, bb + h]), cols[1])
-	draw_colored_polygon(PackedVector2Array([a + h, bb + h, c + h, d + h]), cols[2])
+	draw_colored_polygon(PackedVector2Array([d, c, c + h, d + h]), Color(cols[0], alpha))
+	draw_colored_polygon(PackedVector2Array([bb, c, c + h, bb + h]), Color(cols[1], alpha))
+	draw_colored_polygon(PackedVector2Array([a + h, bb + h, c + h, d + h]), Color(cols[2], alpha))
+	if b.kind == "panel" and alpha >= 1.0:
+		_draw_windows(r, b.h)
 
 
 func _draw_player(p: Dictionary) -> void:
@@ -160,7 +177,7 @@ func _draw_player(p: Dictionary) -> void:
 	draw_line(sp, Iso.to_screen(p.pos + p.dir * 0.8), Color("ff3d81"), 3.0)
 
 
-# Прицел: прямая линия и крестик одного цвета, без индикации дальности.
+# Crosshair: a straight line and a cross of one colour, no range indication.
 func _draw_aim(p: Dictionary) -> void:
 	var dist := minf((aim_point - p.pos).length(), state.ray_cast(p.pos, p.dir, GameState.MAX_RANGE))
 	var end: Vector2 = p.pos + p.dir * dist
@@ -169,3 +186,24 @@ func _draw_aim(p: Dictionary) -> void:
 	draw_line(from_s, end_s, Color(1, 1, 1, 0.6), 1.0)
 	draw_line(end_s + Vector2(-8, 0), end_s + Vector2(8, 0), Color.WHITE, 2.0)
 	draw_line(end_s + Vector2(0, -8), end_s + Vector2(0, 8), Color.WHITE, 2.0)
+
+
+# Window rows on the two visible faces of a panel high-rise; a few windows are lit.
+func _draw_windows(r: Rect2, height: float) -> void:
+	var floors := int(height / 3.0)
+	for f in range(floors):
+		var z := (f + 0.5) * 3.0
+		var up := Vector2(0, -z * Iso.PX_PER_M_HEIGHT)
+		# face along x (the one at the larger y) and face along y (at the larger x)
+		var n_x := int(r.size.x / 2.5)
+		for i in range(n_x):
+			var wx := r.position.x + (i + 0.5) * r.size.x / n_x
+			var pos := Iso.to_screen(Vector2(wx, r.end.y)) + up
+			var lit := (int(wx * 7.0) * 31 + f * 17) % 5 == 0
+			draw_rect(Rect2(pos - Vector2(3, 5), Vector2(6, 9)), Color("ffd27a") if lit else Color("1d2130"))
+		var n_y := int(r.size.y / 2.5)
+		for i in range(n_y):
+			var wy := r.position.y + (i + 0.5) * r.size.y / n_y
+			var pos2 := Iso.to_screen(Vector2(r.end.x, wy)) + up
+			var lit2 := (int(wy * 11.0) * 29 + f * 13) % 6 == 0
+			draw_rect(Rect2(pos2 - Vector2(3, 5), Vector2(6, 9)), Color("7ad7ff") if lit2 else Color("151927"))

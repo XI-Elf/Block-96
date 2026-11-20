@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Генератор уровня «Павлов Яр» по карте города (assets/city-map.png).
+"""Generator for the "Pavlov Yar" level based on the city map (assets/city-map.png).
 
-Крупные элементы (река, мосты, блокпосты, главные дороги, парк) обведены вручную
-по карте; уличная сетка и здания расставляются детерминированно (seed).
-Масштаб игры: 1 пиксель карты = 2 м (в оригинале 1:25000 → район был бы ~4 км; сжато).
-Опорные точки заданы в координатах увеличенного фрагмента (cx, cy), перевод в метры в c().
-Запуск: python3 tools/gen_pavlov_yar.py  → data/levels/pavlov_yar.json (+ превью PNG при --preview)
+Large features (river, bridges, checkpoints, main roads, park) are traced by hand from the map;
+the street grid and buildings are placed deterministically (seed).
+Game scale: 1 map pixel = 2 m (the original 1:25000 would make the district ~4 km wide; compressed).
+Anchor points are in zoomed-crop coordinates (cx, cy); c() converts them to metres.
+Run: python3 tools/gen_pavlov_yar.py  -> data/levels/pavlov_yar.json (+ preview PNG with --preview)
 """
 import json, math, random, sys
 
@@ -13,7 +13,7 @@ SEED = 96
 SIZE = [440, 370]
 
 
-def c(p):  # фрагмент карты (cx, cy) -> метры
+def c(p):  # map crop (cx, cy) -> metres
     return [round(p[0] / 2 - 50, 1), round(p[1] / 2 - 50, 1)]
 
 
@@ -21,7 +21,7 @@ def cs(pts):
     return [c(p) for p in pts]
 
 
-# ---- ручная трассировка по карте ----
+# ---- hand-traced from the map ----
 WATER = cs([(545, 90), (560, 150), (640, 230), (740, 320), (800, 420), (815, 520), (790, 620),
             (720, 700), (680, 760), (685, 845), (770, 845), (790, 760), (850, 680), (920, 590),
             (925, 500), (910, 390), (850, 290), (750, 190), (665, 110), (650, 90)])
@@ -39,8 +39,8 @@ ROADS = [
     {"type": "street", "w": 8, "pts": cs([(690, 92), (780, 70), (900, 60), (940, 55)])},
 ]
 BRIDGES = [
-    {"w": 10, "pts": cs([(540, 138), (700, 92)])},           # северный мост с блокпостом
-    {"w": 14, "pts": cs([(640, 762), (800, 835)])},          # мост главной дороги
+    {"w": 10, "pts": cs([(540, 138), (700, 92)])},           # north bridge with checkpoint
+    {"w": 14, "pts": cs([(640, 762), (800, 835)])},          # main road bridge
 ]
 BLOCKPOSTS = [
     {"id": "bridge_pavlov_yar_north", "pos": c((607, 115)), "dir": [0.96, -0.28]},
@@ -95,7 +95,7 @@ def generate():
     streets = []
     GX, GY, OX, OY, SW = 36.0, 32.0, 14.0, 6.0, 6.0
 
-    # уличная сетка внутри района (куски линий, лежащие в районе и вне больших дорог)
+    # street grid inside the district (line pieces inside the district and away from the main roads)
     def clip(line_pts):
         cur = []
         out = []
@@ -117,8 +117,8 @@ def generate():
         streets += clip([(xx, y) for xx in [i * 2.0 for i in range(int(SIZE[0] / 2))]])
         y += GY
 
-    # кварталы -> здания
-    ix = 0
+    # blocks -> buildings
+    blocks = []
     x = OX
     while x + GX < SIZE[0]:
         y = OY
@@ -126,30 +126,39 @@ def generate():
             bx0, by0 = x + SW / 2 + 2, y + SW / 2 + 2
             bx1, by1 = x + GX - SW / 2 - 2, y + GY - SW / 2 - 2
             corners = [(bx0, by0), (bx1, by0), (bx1, by1), (bx0, by1), ((bx0 + bx1) / 2, (by0 + by1) / 2)]
-            if sum(1 for q in corners if pip(q, DISTRICT) and free(q, 0.3)) >= 5 or (sum(1 for q in corners if pip(q, DISTRICT) and free(q, 0.3)) >= 4 and free(corners[4], 0.3)):
-                kind_block = rnd.random()
-                bw, bd = bx1 - bx0, by1 - by0
-                if kind_block < 0.22:  # гаражный кооператив: параллельные ряды
-                    gy = by0
-                    while gy + 5 <= by1:
-                        buildings.append([round(bx0 + rnd.uniform(0, 2), 1), round(gy, 1),
-                                          round(bw - rnd.uniform(0, 4), 1), 5.0, 2.8, "garage_row"])
-                        gy += 9
-                else:  # частные дома и сараи
-                    for (lx, ly) in [(0, 0), (1, 0), (0, 1), (1, 1)]:
-                        if rnd.random() < 0.18:
-                            continue
-                        w = rnd.uniform(8, 12); d = rnd.uniform(7, 10)
-                        px = bx0 + lx * (bw / 2) + rnd.uniform(0, max(0.1, bw / 2 - w))
-                        py = by0 + ly * (bd / 2) + rnd.uniform(0, max(0.1, bd / 2 - d))
-                        buildings.append([round(px, 1), round(py, 1), round(w, 1), round(d, 1),
-                                          round(rnd.choice([3.5, 3.5, 4.5, 6.0]), 1), "house"])
-                        if rnd.random() < 0.5:
-                            buildings.append([round(px + w + 0.8, 1), round(py + 1, 1), 3.0, 3.0, 2.4, "shed"])
+            ok = [pip(q, DISTRICT) and free(q, 0.3) for q in corners]
+            if sum(ok) >= 5 or (sum(ok) >= 4 and ok[4]):
+                blocks.append((bx0, by0, bx1, by1))
             y += GY
         x += GX
+    blocks.sort(key=lambda b: math.hypot((b[0] + b[2]) / 2 - SPAWN[0], (b[1] + b[3]) / 2 - SPAWN[1]))
+    for i, (bx0, by0, bx1, by1) in enumerate(blocks):
+        bw, bd = bx1 - bx0, by1 - by0
+        r = rnd.random()
+        if i < 3 or r < 0.16:  # panel high-rises; the nearest blocks to the spawn are forced so they are visible at once
+            floors = [9, 12, 9][i] if i < 3 else rnd.choice([5, 5, 9, 9, 12, 16])
+            w, d = min(bw - 2, 24.0), 10.0
+            buildings.append([round(bx0 + (bw - w) / 2, 1), round(by0 + (bd - d) / 2, 1),
+                              round(w, 1), d, floors * 3.0, "panel"])
+        elif r < 0.38:  # garage cooperative: parallel rows
+            gy = by0
+            while gy + 5 <= by1:
+                buildings.append([round(bx0 + rnd.uniform(0, 2), 1), round(gy, 1),
+                                  round(bw - rnd.uniform(0, 4), 1), 5.0, 2.8, "garage_row"])
+                gy += 9
+        else:  # private houses and sheds
+            for (lx, ly) in [(0, 0), (1, 0), (0, 1), (1, 1)]:
+                if rnd.random() < 0.18:
+                    continue
+                w = rnd.uniform(8, 12); d = rnd.uniform(7, 10)
+                px = bx0 + lx * (bw / 2) + rnd.uniform(0, max(0.1, bw / 2 - w))
+                py = by0 + ly * (bd / 2) + rnd.uniform(0, max(0.1, bd / 2 - d))
+                buildings.append([round(px, 1), round(py, 1), round(w, 1), round(d, 1),
+                                  round(rnd.choice([3.5, 3.5, 4.5, 6.0]), 1), "house"])
+                if rnd.random() < 0.5:
+                    buildings.append([round(px + w + 0.8, 1), round(py + 1, 1), 3.0, 3.0, 2.4, "shed"])
 
-    # блокпосты: два бетонных барьера по бокам проезда + будка
+    # checkpoints: two concrete barriers flanking the passage + a booth
     barriers = []
     for bp in BLOCKPOSTS:
         px, py = bp["pos"]; dx, dy = bp["dir"]
@@ -167,15 +176,18 @@ def generate():
         found = None
         for a in range(0, 360, 20):
             q = (SPAWN[0] + r * math.cos(math.radians(a)), SPAWN[1] + r * math.sin(math.radians(a)))
-            if free(q, 0.0) and not blocked(q):
+            # do not spawn right behind a high-rise (in the isometric view it would hide the player)
+            covered = any(b[5] == "panel" and b[0] + b[2] + b[1] + b[3] > q[0] + q[1] + 1
+                          and b[0] - 14 < q[0] < b[0] + b[2] + 14 and b[1] - 14 < q[1] < b[1] + b[3] + 14 for b in buildings)
+            if free(q, 0.0) and not blocked(q) and not covered:
                 found = q
                 break
         if found:
             spawn = list(found)
             break
     return {
-        "name": "Павлов Яр (по карте: река, мосты, дороги, парк; здания генерируются)",
-        "scale_note": "1 пиксель карты = 2 м; район сжат относительно 1:25000",
+        "name": "Pavlov Yar (from the map: river, bridges, roads, park; buildings are generated)",
+        "scale_note": "1 map pixel = 2 m; district compressed relative to 1:25000",
         "size": SIZE, "spawn": [round(spawn[0], 1), round(spawn[1], 1)],
         "water": [WATER], "district": DISTRICT, "parks": PARKS,
         "roads": ROADS, "streets": streets, "bridges": BRIDGES, "railways": RAILWAYS,
@@ -185,10 +197,10 @@ def generate():
 
 if __name__ == "__main__":
     d = generate()
-    assert free(d["spawn"], 0.0), "spawn не на свободной земле: " + str(d["spawn"])
+    assert free(d["spawn"], 0.0), "spawn is not on free ground: " + str(d["spawn"])
     with open("data/levels/pavlov_yar.json", "w", encoding="utf-8") as f:
         json.dump(d, f, ensure_ascii=False, separators=(",", ":"))
-    print("зданий:", len(d["buildings"]), "кусков улиц:", len(d["streets"]))
+    print("buildings:", len(d["buildings"]), "street pieces:", len(d["streets"]))
     if "--preview" in sys.argv:
         from PIL import Image, ImageDraw
         S = 4
@@ -201,7 +213,7 @@ if __name__ == "__main__":
         for s in d["streets"]: dr.line(P(s), fill=(66, 66, 76), width=6 * S)
         for b in d["bridges"]: dr.line(P(b["pts"]), fill=(120, 110, 100), width=b["w"] * S)
         for b in d["buildings"]:
-            col = {"house": (150, 150, 180), "garage_row": (120, 120, 140), "shed": (110, 100, 100)}.get(b[5], (200, 80, 80))
+            col = {"house": (150, 150, 180), "garage_row": (120, 120, 140), "panel": (190, 190, 210), "shed": (110, 100, 100)}.get(b[5], (200, 80, 80))
             dr.rectangle([b[0] * S, b[1] * S, (b[0] + b[2]) * S, (b[1] + b[3]) * S], fill=col)
         for bp in d["blockposts"]:
             x, y = bp["pos"]; dr.ellipse([(x - 4) * S, (y - 4) * S, (x + 4) * S, (y + 4) * S], outline=(255, 60, 60), width=3)

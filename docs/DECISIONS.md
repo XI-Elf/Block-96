@@ -1,22 +1,28 @@
-# Решения
+# Decisions
 
-Правило: при конфликте материалов старого проекта Wastland с README Block-96 приоритет у Block-96 (решение владельца, 2026-11-20).
+Rule: when material from the earlier Wastland project conflicts with the Block-96 README, Block-96 wins (owner's decision, 2026-11-20).
 
-| Тема | Решение |
+| Topic | Decision |
 |---|---|
-| Время/мир | 1996 катастрофа, 2003 — настоящее; лор Люмена/«Каскад»/ОСЬ не используется |
-| Валюта | жетоны метро («энергетические токены»), «светляки» заменены |
-| Территории | сеточные метки на контрольных точках (X, Y, Layer), жетоны, окна уязвимости; личная база-участок 30×50 не переносится как есть |
-| Камера | изометрия (README говорит «top-down» — приоритет за решением владельца) |
-| Прицел | прямая линия и крестик, без цвета дальности |
-| Движок/язык | Godot 4, GDScript |
-| Порядок разработки | 1) полностью одиночная игра, клиент и сохранения на устройстве игрока; 2) позже кооп, хост — компьютер одного из игроков (без выделенного сервера); решение владельца 2026-11-20, заменяет «сразу мультиплеер» |
-| Размер первой версии | Один район — Павлов Яр (выбор владельца 2026-11-20; жилые кварталы и дворы у моста с блокпостом, клетки 09Г–10В по карте), слой Z=0 |
-| Сервисы | Vercel — веб (сайт, веб-билд); Supabase — позже для аккаунтов/облачных данных, если понадобится. Схема Supabase пока НЕ применяется |
-| Выделенный сервер | Не нужен; Google Cloud e2-micro и Postgres-бэкенд для боя сняты |
+| Time / world | Catastrophe in 1996, present day is 2003; the Wastland lore (Lumen, Cascade, AXIS) is not used |
+| Currency | Metro tokens ("energy tokens"); "glow tokens" are replaced |
+| Territory | Grid marks on control points (X, Y, N), tokens, vulnerability windows; the private 30×50 base plot is not carried over as is |
+| Camera | Isometric (the README says "top-down"; the owner's decision wins) |
+| Crosshair | A straight line and a cross, no range colour coding |
+| Engine / language | Godot 4, GDScript |
+| Development order | 1) fully single-player game, client and saves on the player's device; 2) later co-op, host = one player's computer (no dedicated server). Replaces "multiplayer first" |
+| First version scope | One district: Pavlov Yar, layer N = 0 only |
+| Services | Vercel: web (site, web build). Supabase: later, for accounts / cloud data if needed. No Supabase schema is applied yet |
+| Dedicated server | Not needed; Google Cloud e2-micro and the Postgres combat backend are dropped |
+| Development order within the district | 1) layout from the map; 2) life and infrastructure (kiosks, stops, poles, power lines, cars, bins); 3) mobs |
 
-## Архитектурные правила под будущий кооп с хостом-игроком
-- Симуляция отдельно от отрисовки: игровое состояние и правила не зависят от узлов рендера.
-- Весь ввод игрока — команды (движение, прицел, огонь, действие), симуляция принимает только команды; тогда хост сможет принимать их от других игроков.
-- Случайность из сида, состояние сериализуется (это же формат сохранения в `user://`).
-- Идентификаторы сущностей и игрока вводим сразу, даже в одиночке (игрок №1).
+## Architecture rules for future host-player co-op
+- Simulation is separate from rendering: game state and rules do not depend on render nodes.
+- All player input is a command (move, aim, fire, action); the simulation accepts only commands, so a host can later accept the same commands from other players.
+- Randomness comes from a seed; state is serializable (this is also the save format in `user://`).
+- Entity and player ids exist from the start, even in single-player (player #1).
+
+## Repository rules (owner, 2026-11-20)
+- Everything pushed to GitHub is in English (or Ukrainian), no Russian.
+- Z layers are called "layers N" (layer N), in code, configs and docs.
+- High-rises must be visible at once at the start of a level (panel blocks of 5-16 floors, the nearest are forced next to the spawn).

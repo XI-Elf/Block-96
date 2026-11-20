@@ -1,6 +1,6 @@
 class_name SaveGame
 extends RefCounted
-## Сохранение на устройстве игрока (user://).
+## Saving on the player's device (user://).
 
 const DEFAULT_PATH := "user://save.json"
 

@@ -1,45 +1,60 @@
 {
-  "_note": "5 блокпостов на карте (красно-белые метки на реке). cell приблизительно ±1; near — ближайшие районы.",
-  "blockposts": [
-    {
-      "id": "bridge_sormovka_pavlov_yar",
-      "near": [
-        "sormovka",
-        "pavlov_yar"
-      ],
-      "cell": "09В"
-    },
-    {
-      "id": "bridge_kazanskaya_north",
-      "near": [
-        "kazanskaya_sloboda",
-        "derbyshki"
-      ],
-      "cell": "11Г"
-    },
-    {
-      "id": "bridge_ilyinka",
-      "near": [
-        "ilyinka",
-        "kazanskaya_sloboda"
-      ],
-      "cell": "10Е"
-    },
-    {
-      "id": "bridge_monastyrskaya",
-      "near": [
-        "monastyrskaya_sloboda",
-        "zarechye"
-      ],
-      "cell": "13И"
-    },
-    {
-      "id": "bridge_rechnoy",
-      "near": [
-        "rechnoy",
-        "krasny_bor"
-      ],
-      "cell": "19К"
-    }
-  ]
+ "_note": "Five checkpoints on the map (red-white markers on the river). 'cell' is approximate (+-1).",
+ "blockposts": [
+  {
+   "id": "bridge_sormovka_pavlov_yar",
+   "near": [
+    "sormovka",
+    "pavlov_yar"
+   ],
+   "cell": {
+    "col": 9,
+    "row": 3
+   }
+  },
+  {
+   "id": "bridge_kazanskaya_north",
+   "near": [
+    "kazanskaya_sloboda",
+    "derbyshki"
+   ],
+   "cell": {
+    "col": 11,
+    "row": 4
+   }
+  },
+  {
+   "id": "bridge_ilyinka",
+   "near": [
+    "ilyinka",
+    "kazanskaya_sloboda"
+   ],
+   "cell": {
+    "col": 10,
+    "row": 6
+   }
+  },
+  {
+   "id": "bridge_monastyrskaya",
+   "near": [
+    "monastyrskaya_sloboda",
+    "zarechye"
+   ],
+   "cell": {
+    "col": 13,
+    "row": 9
+   }
+  },
+  {
+   "id": "bridge_rechnoy",
+   "near": [
+    "rechnoy",
+    "krasny_bor"
+   ],
+   "cell": {
+    "col": 19,
+    "row": 10
+   }
+  }
+ ]
 }

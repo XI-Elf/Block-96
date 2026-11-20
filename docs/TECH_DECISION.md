@@ -1,23 +1,11 @@
-# Выбор стека — решение за владельцем проекта
+# Tech stack
 
-Не выбран. В репозитории есть только `.gitignore` от Godot (шаблон, не решение).
+Chosen by the owner: **Godot 4.3 + GDScript**, single-player first, saves on the device (`user://`).
 
-| Вариант | Плюсы | Минусы |
-|---|---|---|
-| Godot 4 + GDScript/C# (рекомендация) | 2D top-down, лёгкий, TileMap + слои под Z, бесплатный | Мультиплеер на сотни игроков и «слияние полигонов» придётся делать самим |
-| Unity (C#) | Готовый нетворкинг, много ассетов | Тяжелее, лицензии, избыточен для 2D |
-| Свой движок/веб (TS + Canvas/WebGL) | Полный контроль, быстрый старт прототипа в браузере | Весь тулинг самому |
+## Hosting and services
+- **Vercel**: website, launcher, web build. A Godot web export needs COOP/COEP headers or a build without threads (verify when setting up).
+- **Supabase** (Postgres + Auth): optional, later, for accounts and cloud data. Not used yet; no schema applied.
+- **Dedicated game server**: dropped. Co-op will use a player host (Godot high-level multiplayer, listen server).
 
-Бэкенд (нужен для общего мира и территорий): авторитетный сервер (Go/Rust/C# или Node) + PostgreSQL для состояния клеток/токенов. Для одиночного прототипа не нужен.
-
-## Мультиплеер (Godot 4): язык и бэкенд — предложение
-Рекомендация: GDScript + авторитетный выделенный сервер на том же проекте (Godot headless) + PostgreSQL для клеток территории, жетонов и тайм-аутов.
-Альтернатива: C# — быстрее на тяжёлой логике (видимость по слоям, звук), но тяжелее сборка и экспорт.
-
-## Хостинг: Supabase и Vercel (владелец, 2026-11-20)
-- **Supabase** (Postgres + Auth + Realtime): аккаунты, клетки территории, жетоны, склады, таймеры. Realtime подходит для редких событий (смена владельца метки, окна уязвимости), но не для синхронизации боя 20–60 раз в секунду.
-- **Vercel**: сайт, лаунчер, список серверов, лёгкие serverless-функции (матчмейкинг, админка). Постоянные процессы и UDP/WebSocket-сервер игры он не держит.
-- **Игровой сервер** (Godot headless, авторитетный): нужен постоянный процесс на VPS или контейнерном хостинге; пишет состояние в Supabase.
-- Секреты: `service_role` ключ Supabase только на сервере, клиент работает через Auth + RLS.
-
-> **Обновление 2026-11-20:** разделы про выделенный сервер, Postgres-бэкенд и Google Cloud сняты. Актуальное — в DECISIONS.md. Веб-билд Godot на Vercel потребует заголовков COOP/COEP или экспорта без потоков (проверить при настройке).
+## Dropped options (for reference)
+Unity, a custom web engine, a Godot headless dedicated server with Postgres, Google Cloud e2-micro, Oracle Always Free.

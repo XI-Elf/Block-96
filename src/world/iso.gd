@@ -1,6 +1,6 @@
 class_name Iso
 extends RefCounted
-## Изометрия 2:1. 1 метр мира = 32 px по оси X экрана и 16 px по Y.
+## 2:1 isometry. 1 world metre = 32 px along screen X and 16 px along screen Y.
 
 const HALF_W := 32.0
 const HALF_H := 16.0
