@@ -1,0 +1,32 @@
+{
+  "_note": "Список со скана карты (1:25000, сетка 01–24 по X, А–Л по Y). Координаты клеток (grid) не заполнены: нужен исходный файл карты. status: central|ordinary|island|port|hill.",
+  "grid": {"x": ["01", "24"], "y": ["А", "Л"], "scale": "1:25000", "contour_interval_m": 5},
+  "river_splits_city": true,
+  "districts": [
+    {"id": "kazanskaya_sloboda", "name": "Казанская Слобода", "status": "central"},
+    {"id": "derbyshki", "name": "Дербышки"},
+    {"id": "sormovka", "name": "Сормовка"},
+    {"id": "pavlov_yar", "name": "Павлов Яр"},
+    {"id": "saltovka", "name": "Салтовка"},
+    {"id": "traktorny", "name": "Тракторный"},
+    {"id": "zavodskoy", "name": "Заводской"},
+    {"id": "ilyinka", "name": "Ильинка"},
+    {"id": "zarechye", "name": "Заречье"},
+    {"id": "pokrovka", "name": "Покровка"},
+    {"id": "novozavodskoy", "name": "Новозаводский"},
+    {"id": "luki", "name": "Луки"},
+    {"id": "borisoglebsky", "name": "Борисоглебский"},
+    {"id": "yuzhny", "name": "Южный"},
+    {"id": "kirovsky", "name": "Кировский"},
+    {"id": "krasny_bor", "name": "Красный Бор"},
+    {"id": "monastyrskaya_sloboda", "name": "Монастырская Слобода", "status": "island"},
+    {"id": "rechnoy", "name": "Речной", "status": "port", "note": "порт и карьеры"},
+    {"id": "sudostroitelny", "name": "Судостроительный"},
+    {"id": "levoberezhny", "name": "Левобережный"},
+    {"id": "severny", "name": "Северный"},
+    {"id": "nagorny", "name": "Нагорный"},
+    {"id": "kompressorny", "name": "Компрессорный"},
+    {"id": "aviastroy", "name": "Авиастрой"},
+    {"id": "kholodnaya_gora", "name": "Холодная Гора", "status": "hill", "note": "холм на западе"}
+  ]
+}

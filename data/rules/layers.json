@@ -1,0 +1,12 @@
+{
+  "_note": "Z-слои. Значения между +1 и +16 — этажи; точная высота этажа в метрах не решена.",
+  "axis": ["x", "y", "layer"],
+  "layers": [
+    {"id": "roof_max", "z": 16, "name": "Высотки, крыши (верх)", "kind": "above"},
+    {"id": "above",    "z_range": [1, 15], "name": "Этажи и крыши", "kind": "above"},
+    {"id": "ground",   "z": 0,  "name": "Улицы, дворы, промзоны", "kind": "surface"},
+    {"id": "metro",    "z": -1, "name": "Метро и подземный трамвай", "kind": "underground"},
+    {"id": "sewer",    "z": -2, "name": "Канализация, коллекторы", "kind": "underground"}
+  ],
+  "visibility": {"cones": true, "cross_layer_sight": "TBD", "sound_propagates_between_layers": true}
+}

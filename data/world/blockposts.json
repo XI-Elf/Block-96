@@ -1,0 +1,9 @@
+{
+  "_note": "Блокпосты/мосты на ключевых переходах (по карте). Клетки сетки не заполнены.",
+  "blockposts": [
+    {"id": "bridge_ilyinka", "near": "ilyinka", "grid": null},
+    {"id": "bridge_pavlov_yar", "near": "pavlov_yar", "grid": null},
+    {"id": "bridge_monastyrskaya", "near": "monastyrskaya_sloboda", "grid": null},
+    {"id": "bridge_rechnoy", "near": "rechnoy", "grid": null}
+  ]
+}
