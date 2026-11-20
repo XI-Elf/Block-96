@@ -1,9 +1,45 @@
 {
-  "_note": "Блокпосты/мосты на ключевых переходах (по карте). Клетки сетки не заполнены.",
+  "_note": "5 блокпостов на карте (красно-белые метки на реке). cell приблизительно ±1; near — ближайшие районы.",
   "blockposts": [
-    {"id": "bridge_ilyinka", "near": "ilyinka", "grid": null},
-    {"id": "bridge_pavlov_yar", "near": "pavlov_yar", "grid": null},
-    {"id": "bridge_monastyrskaya", "near": "monastyrskaya_sloboda", "grid": null},
-    {"id": "bridge_rechnoy", "near": "rechnoy", "grid": null}
+    {
+      "id": "bridge_sormovka_pavlov_yar",
+      "near": [
+        "sormovka",
+        "pavlov_yar"
+      ],
+      "cell": "09В"
+    },
+    {
+      "id": "bridge_kazanskaya_north",
+      "near": [
+        "kazanskaya_sloboda",
+        "derbyshki"
+      ],
+      "cell": "11Г"
+    },
+    {
+      "id": "bridge_ilyinka",
+      "near": [
+        "ilyinka",
+        "kazanskaya_sloboda"
+      ],
+      "cell": "10Е"
+    },
+    {
+      "id": "bridge_monastyrskaya",
+      "near": [
+        "monastyrskaya_sloboda",
+        "zarechye"
+      ],
+      "cell": "13И"
+    },
+    {
+      "id": "bridge_rechnoy",
+      "near": [
+        "rechnoy",
+        "krasny_bor"
+      ],
+      "cell": "19К"
+    }
   ]
 }
