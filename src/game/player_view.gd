@@ -2,14 +2,14 @@ class_name PlayerView
 extends Node2D
 ## Human figure, 1.75 m tall, drawn at its real scale (see Iso).
 
-const PH := 39.19
+const PH := Iso.PX_PER_M_HEIGHT
 const BODY_W := 0.5 # metres
 var dir := Vector2.RIGHT
 
 
 func _draw() -> void:
 	var k := 45.25 # px per metre of ground distance
-	draw_colored_polygon(_ellipse(Vector2.ZERO, BODY_W * 0.6 * k, BODY_W * 0.3 * k), Color(0, 0, 0, 0.35))
+	draw_colored_polygon(_ellipse(Vector2.ZERO, BODY_W * 0.6 * k, BODY_W * 0.6 * k * Iso.HALF_H / Iso.HALF_W), Color(0, 0, 0, 0.35))
 	var hw := BODY_W * 0.5 * k * 0.7
 	# legs, torso, head
 	draw_rect(Rect2(-hw, -0.85 * PH, hw * 2, 0.85 * PH), Color("2b3040"))

@@ -5,7 +5,7 @@ const LEVEL_PATH := "res://data/levels/pavlov_yar.json"
 const PLAYER_ID := 1
 const TRACER_TTL := 0.12
 const CHEST_M := 1.25 # weapon height
-const ZOOM_DEFAULT := 1.4
+const ZOOM_DEFAULT := 1.2
 const ZOOM_MIN := 0.6
 const ZOOM_MAX := 2.5
 
@@ -42,7 +42,7 @@ func _ready() -> void:
 	overlay.draw.connect(_draw_overlay)
 	add_child(overlay)
 	camera = Camera2D.new()
-	camera.zoom = Vector2(ZOOM_DEFAULT, ZOOM_DEFAULT) # at 1.4 a 4.5 m car is ~225 px long on the screen (matches the owner's reference)
+	camera.zoom = Vector2(ZOOM_DEFAULT, ZOOM_DEFAULT) # at 1.2 a 4.5 m car is ~220 px long on the screen (matches the owner's reference)
 	add_child(camera)
 	var layer := CanvasLayer.new()
 	hud = Label.new()

@@ -46,7 +46,7 @@ func _init() -> void:
 	check(Level.depth_relation(behind, front) < 0 and Level.depth_relation(front, behind) > 0, "depth order: farther is drawn first")
 
 	# scale and building variety
-	check(absf(Iso.PX_PER_M_HEIGHT - 45.2548 * cos(deg_to_rad(30.0))) < 0.1, "vertical scale matches the isometric projection")
+	check(absf(Iso.PX_PER_M_HEIGHT - 45.2548 * cos(deg_to_rad(Iso.ELEVATION_DEG))) < 0.05 and absf(Iso.HALF_H - 32.0 * sin(deg_to_rad(Iso.ELEVATION_DEG))) < 0.05, "projection constants match the camera elevation")
 	var min_h := 1e9
 	var max_h := 0.0
 	var rotated := 0

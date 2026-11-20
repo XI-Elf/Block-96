@@ -4,7 +4,7 @@ extends Node2D
 ## Heights range from single-storey private houses to 9-floor panel blocks.
 
 const FLOOR_H := 2.8
-const PH := 39.19 # = Iso.PX_PER_M_HEIGHT
+const PH := Iso.PX_PER_M_HEIGHT
 
 const WALL := {
 	"house": Color("5d6277"), "shed": Color("5e504a"), "garage_row": Color("585865"),

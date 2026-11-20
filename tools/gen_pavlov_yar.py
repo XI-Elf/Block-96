@@ -53,6 +53,7 @@ SPAWN = c((520, 520))
 
 MICRO = [165.0, 118.0, 322.0, 238.0]  # microdistrict of panel blocks (x0, y0, x1, y1)
 FLOOR_H = 2.8
+HALF_H, PX_H = 26.2129, 25.9560  # isometric constants at 55 degrees (see src/world/iso.gd)
 
 
 def pip(pt, poly):
@@ -162,10 +163,10 @@ def resample(pts, step=3.0):
 def hides(b, q):
     """True if building b would cover point q on the isometric screen (q standing behind it)."""
     pts = corners(b[0], b[1], b[2], b[3], b[6])
-    scr = [((x - y) * 32.0, (x + y) * 16.0) for x, y in pts]
-    qs = ((q[0] - q[1]) * 32.0, (q[0] + q[1]) * 16.0 - 1.25 * 39.19)
+    scr = [((x - y) * 32.0, (x + y) * HALF_H) for x, y in pts]
+    qs = ((q[0] - q[1]) * 32.0, (q[0] + q[1]) * HALF_H - 1.25 * PX_H)
     if not (min(p[0] for p in scr) <= qs[0] <= max(p[0] for p in scr)
-            and min(p[1] for p in scr) - b[4] * 39.19 <= qs[1] <= max(p[1] for p in scr)):
+            and min(p[1] for p in scr) - b[4] * PX_H <= qs[1] <= max(p[1] for p in scr)):
         return False
     cx, cy = b[0], b[1]
     for i in range(4):

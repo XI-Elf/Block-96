@@ -1,13 +1,15 @@
 class_name Iso
 extends RefCounted
-## 2:1 isometry (camera elevation 30 degrees, rotated 45 degrees).
-## Ground scale: 1 world metre along an axis = (32, 16) px, i.e. 45.25 px per metre of ground distance.
-## Vertical scale follows from the projection: 45.25 * cos(30 deg) = 39.19 px per metre of height.
+## Orthographic camera rotated 45 degrees around the vertical axis, tilted to ELEVATION_DEG above the ground.
+## Ground scale: 1 world metre along an axis = (32, HALF_H) px, i.e. 45.25 px per metre of ground distance;
+## HALF_H = 32 * sin(elevation) and PX_PER_M_HEIGHT = 45.2548 * cos(elevation) (tests check these).
+## At 55 degrees (like the owner's reference photo) tall buildings hide much less of the ground than at 30.
 ## Real-world proportions used everywhere: human 1.75 m, floor 2.8 m, car 4.5 m.
 
 const HALF_W := 32.0
-const HALF_H := 16.0
-const PX_PER_M_HEIGHT := 39.19
+const ELEVATION_DEG := 55.0
+const HALF_H := 26.2129
+const PX_PER_M_HEIGHT := 25.9560
 const FLOOR_HEIGHT_M := 2.8
 
 

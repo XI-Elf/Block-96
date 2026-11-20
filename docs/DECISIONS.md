@@ -29,3 +29,4 @@ Rule: when material from the earlier Wastland project conflicts with the Block-9
 - Real-world scale: human 1.75 m, floor 2.8 m, car 4.5 m; isometric vertical scale derived from the projection (39.19 px per metre of height).
 - Building heights range from single-storey private houses (3.2 m) up to 9-floor panel blocks (25.2 m); nothing taller (owner, 2026-11-20). CIS panel style of the 2000s: 5- and 9-floor slabs and point towers, glazed loggias, antennas.
 - Streets and roads must not be only rectangular: bent grids at two orientations, diagonal connectors, buildings oriented along the street (rotated footprints).
+- Camera: orthographic, rotated 45 degrees and tilted 55 degrees above the ground (owner's reference photo); constants in `src/world/iso.gd` (ELEVATION_DEG). Default zoom 1.2, mouse wheel 0.6-2.5.
