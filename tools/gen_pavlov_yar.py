@@ -313,7 +313,7 @@ def generate():
         ang = math.degrees(math.atan2(ny, nx))
         for s in (-1, 1):
             place(px + nx * s * 4.0, py + ny * s * 4.0, 3.0, 0.8, 1.1, "barrier", ang, check=False)
-        place(px + nx * 6.5, py + ny * 6.5, 3.0, 3.0, 2.7, "booth", math.degrees(math.atan2(dy, dx)), check=False)
+        place(px + nx * 9.0, py + ny * 9.0, 3.0, 3.0, 2.7, "booth", math.degrees(math.atan2(dy, dx)), check=False)
 
     def blocked(pt):
         return any(pip(pt, o) or min(dist_seg(pt, o[i], o[(i + 1) % 4]) for i in range(4)) < 3.0 for o in polys)

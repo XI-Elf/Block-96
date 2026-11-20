@@ -68,6 +68,7 @@ static func load_from(path: String) -> Level:
 			"h": h, "kind": b[5], "angle": float(b[6]), "key": b[0] + b[1],
 			"box": Rect2(min_x, min_y - h * Iso.PX_PER_M_HEIGHT, max_x - min_x, max_y - min_y + h * Iso.PX_PER_M_HEIGHT)})
 		lv.walls.append(poly)
+	lv._compute_draw_order()
 	for w in data.get("water", []):
 		lv.water.append(_pts(w))
 	for pk in data.get("parks", []):
@@ -89,3 +90,79 @@ static func load_from(path: String) -> Level:
 	for bp in data.get("blockposts", []):
 		lv.blockposts.append({"id": bp.id, "pos": Vector2(bp.pos[0], bp.pos[1]), "dir": Vector2(bp.dir[0], bp.dir[1])})
 	return lv
+
+
+## Relation of two non-overlapping convex footprints in the isometric view (camera looks along (1, 1)):
+## returns -1 if a must be drawn before b (a is behind), +1 if after, 0 if unordered.
+static func depth_relation(a: PackedVector2Array, b: PackedVector2Array) -> int:
+	for poly_pair in [[a, b, 1], [b, a, -1]]:
+		var pa: PackedVector2Array = poly_pair[0]
+		var pb: PackedVector2Array = poly_pair[1]
+		var sign: int = poly_pair[2]
+		var c := Vector2.ZERO
+		for p in pa:
+			c += p
+		c /= pa.size()
+		for i in pa.size():
+			var p0 := pa[i]
+			var p1 := pa[(i + 1) % pa.size()]
+			var e := (p1 - p0).normalized()
+			var n := Vector2(e.y, -e.x)
+			if n.dot(c - p0) > 0.0:
+				n = -n # outward normal of pa
+			var separated := true
+			for q in pb:
+				if n.dot(q - p0) < -0.001:
+					separated = false
+					break
+			if separated:
+				var toward_camera := n.x + n.y
+				if absf(toward_camera) < 0.001:
+					return 0
+				# pb lies on the outer side of pa's edge: it is nearer the camera if n faces the camera
+				return -sign if toward_camera > 0.0 else sign
+	return 0
+
+
+## Painter's order for all buildings (topological sort over depth_relation); stores b.rank.
+func _compute_draw_order() -> void:
+	var n := buildings.size()
+	var after: Array = []   # after[i] = indices that must be drawn after i
+	var indeg: Array = []
+	for i in n:
+		after.append([])
+		indeg.append(0)
+	for i in n:
+		for j in range(i + 1, n):
+			var r := depth_relation(buildings[i].poly, buildings[j].poly)
+			if r < 0:
+				after[i].append(j)
+				indeg[j] += 1
+			elif r > 0:
+				after[j].append(i)
+				indeg[i] += 1
+	var ready: Array = []
+	for i in n:
+		if indeg[i] == 0:
+			ready.append(i)
+	var rank := 0
+	var done := {}
+	while not ready.is_empty():
+		ready.sort_custom(func(x, y): return buildings[x].key < buildings[y].key)
+		var cur: int = ready.pop_front()
+		done[cur] = true
+		buildings[cur]["rank"] = rank
+		rank += 1
+		for j in after[cur]:
+			indeg[j] -= 1
+			if indeg[j] == 0:
+				ready.append(j)
+	if done.size() < n: # depth cycles (rare): fall back to the centre key for the rest
+		var rest: Array = []
+		for i in n:
+			if not done.has(i):
+				rest.append(i)
+		rest.sort_custom(func(x, y): return buildings[x].key < buildings[y].key)
+		for i in rest:
+			buildings[i]["rank"] = rank
+			rank += 1

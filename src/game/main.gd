@@ -106,35 +106,30 @@ func _process(_dt: float) -> void:
 		elif v.b.box.has_point(chest):
 			z_back = mini(z_back, v.z_index)
 		v.set_faded(not in_front and v.b.box.has_point(chest))
-	player_view.z_index = clampi(z_front + 1 if z_front + 1 < z_back else z_back - 1, -3999, 3999)
+	player_view.z_index = clampi(z_front + 1 if z_front + 1 < z_back else z_back - 1, -3999, 3999) # buildings use even z, so +1 / -1 is a free slot
 	hud.text = "HP %d   Ammo %d/%d%s   [WASD] move  [LMB] fire  [R] reload  [F5] save  [F9] load  [wheel] zoom" % [
 		p.hp, p.ammo, GameState.MAG_SIZE, "  reloading..." if p.reload > 0.0 else ""]
 	overlay.queue_redraw()
 
 
-## True when the player is on the camera side of one of the building's visible faces.
+## True when the player stands nearer the camera than the building (point vs convex footprint).
 func _in_front_of(b: Dictionary, pos: Vector2, pkey: float) -> bool:
 	var poly: PackedVector2Array = b.poly
-	var n := poly.size()
 	var c: Vector2 = b.center
-	var any_face_test := false
-	for i in n:
+	var best := -INF
+	var best_front: bool = pkey >= b.key
+	for i in poly.size():
 		var p0 := poly[i]
-		var p1 := poly[(i + 1) % n]
-		var e := p1 - p0
-		var edge_len := e.length()
-		var u := e / edge_len
-		var normal := Vector2(u.y, -u.x)
-		if normal.dot((p0 + p1) * 0.5 - c) < 0.0:
-			normal = -normal
-		if normal.x + normal.y <= 0.05:
-			continue
-		var along := (pos - p0).dot(u)
-		if along >= -0.5 and along <= edge_len + 0.5:
-			any_face_test = true
-			if (pos - p0).dot(normal) >= 0.0:
-				return true
-	return not any_face_test and pkey >= b.key
+		var p1 := poly[(i + 1) % poly.size()]
+		var e := (p1 - p0).normalized()
+		var n := Vector2(e.y, -e.x)
+		if n.dot(c - p0) > 0.0:
+			n = -n
+		var dist := n.dot(pos - p0)
+		if dist > best:
+			best = dist
+			best_front = (n.x + n.y) > 0.0
+	return best_front
 
 
 func _read_move() -> Vector2:

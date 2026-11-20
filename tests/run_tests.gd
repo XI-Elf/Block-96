@@ -30,6 +30,21 @@ func _init() -> void:
 	check(lv.water.size() > 0 and lv.bridges.size() == 2 and lv.blockposts.size() == 2, "river, 2 bridges, 2 checkpoints")
 	check(st.in_water(Vector2(380, 175)) and not st.hits_wall(lv.bridges[0].pts[0].lerp(lv.bridges[0].pts[1], 0.5)) , "water is impassable, bridge is walkable")
 
+	# buildings never overlap in plan, and have a consistent draw order
+	var overlaps := 0
+	for i in lv.buildings.size():
+		for j in range(i + 1, lv.buildings.size()):
+			if Geometry2D.intersect_polygons(lv.buildings[i].poly, lv.buildings[j].poly).size() > 0:
+				overlaps += 1
+	check(overlaps == 0, "no building footprints overlap (found %d)" % overlaps)
+	var ranks := {}
+	for bd in lv.buildings:
+		ranks[bd.rank] = true
+	check(ranks.size() == lv.buildings.size(), "every building has a unique draw rank")
+	var behind := Level.footprint(0, 0, 10, 10, 0)
+	var front := Level.footprint(0, 20, 10, 10, 0)
+	check(Level.depth_relation(behind, front) < 0 and Level.depth_relation(front, behind) > 0, "depth order: farther is drawn first")
+
 	# scale and building variety
 	check(absf(Iso.PX_PER_M_HEIGHT - 45.2548 * cos(deg_to_rad(30.0))) < 0.1, "vertical scale matches the isometric projection")
 	var min_h := 1e9

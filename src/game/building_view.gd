@@ -16,7 +16,7 @@ var b: Dictionary
 
 func setup(building: Dictionary) -> void:
 	b = building
-	z_index = int(b.key * 4.0)
+	z_index = int(b.rank) * 2
 	queue_redraw()
 
 
