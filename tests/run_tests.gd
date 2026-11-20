@@ -20,7 +20,7 @@ func _init() -> void:
 	var lv := Level.load_from("res://data/levels/pavlov_yar.json")
 	check(lv != null and lv.walls.size() > 0, "level loads")
 	var st := GameState.new(7)
-	st.walls = lv.walls
+	st.set_walls(lv.walls)
 	st.water = lv.water
 	st.walkable = lv.walkable
 	st.add_player(1, lv.spawn)
@@ -30,13 +30,30 @@ func _init() -> void:
 	check(lv.water.size() > 0 and lv.bridges.size() == 2 and lv.blockposts.size() == 2, "river, 2 bridges, 2 checkpoints")
 	check(st.in_water(Vector2(380, 175)) and not st.hits_wall(lv.bridges[0].pts[0].lerp(lv.bridges[0].pts[1], 0.5)) , "water is impassable, bridge is walkable")
 
+	# scale and building variety
+	check(absf(Iso.PX_PER_M_HEIGHT - 45.2548 * cos(deg_to_rad(30.0))) < 0.1, "vertical scale matches the isometric projection")
+	var min_h := 1e9
+	var max_h := 0.0
+	var rotated := 0
+	for bd in lv.buildings:
+		if bd.kind == "house" or bd.kind == "panel":
+			min_h = minf(min_h, bd.h)
+			max_h = maxf(max_h, bd.h)
+		if absf(bd.angle) > 2.0:
+			rotated += 1
+	check(min_h <= 3.3 and max_h >= 9 * 2.8 - 0.1 and max_h <= 9 * 2.8 + 0.1, "heights range from 1 floor to 9 floors (max 9)")
+	check(rotated > 10, "buildings follow non-orthogonal streets")
+	var oriented := lv.buildings.filter(func(bd): return bd.kind == "house" and absf(bd.angle) > 10.0)
+	if oriented.size() > 0:
+		check(st.hits_wall(oriented[0].center), "rotated building blocks movement")
+
 	# movement and collisions
 	var p0: Vector2 = st.players[1].pos
 	for i in 30:
 		st.step([cmd(Vector2(0, 1))], 1.0 / 60.0)
 	check(st.players[1].pos.y > p0.y, "player moves")
 	var st2 := GameState.new(7)
-	st2.walls = [Rect2(5, 0, 1, 10)]
+	st2.set_walls([GameState.rect_poly(Rect2(5, 0, 1, 10))])
 	st2.add_player(1, Vector2(3, 5))
 	for i in 600:
 		st2.step([cmd(Vector2(1, 0))], 1.0 / 60.0)
@@ -46,7 +63,7 @@ func _init() -> void:
 	check(is_equal_approx(st2.ray_cast(Vector2(3, 5), Vector2.RIGHT, 40.0), 2.0), "ray to wall = 2 m")
 	check(is_equal_approx(st2.ray_cast(Vector2(3, 5), Vector2.LEFT, 40.0), 40.0), "ray into empty space = max")
 	var st3 := GameState.new(1)
-	st3.walls = [Rect2(10, 0, 1, 10)]
+	st3.set_walls([GameState.rect_poly(Rect2(10, 0, 1, 10))])
 	st3.add_player(1, Vector2(2, 5))
 	var ev := st3.step([cmd(Vector2.ZERO, Vector2(20, 5), true)], 1.0 / 60.0)
 	check(ev.size() == 1 and ev[0].type == "shot" and ev[0].hit_wall, "shot hits the wall")
@@ -83,7 +100,7 @@ func _init() -> void:
 func _run_scripted(seed_value: int) -> GameState:
 	var lv := Level.load_from("res://data/levels/pavlov_yar.json")
 	var s := GameState.new(seed_value)
-	s.walls = lv.walls
+	s.set_walls(lv.walls)
 	s.water = lv.water
 	s.walkable = lv.walkable
 	s.add_player(1, lv.spawn)

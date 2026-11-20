@@ -14,7 +14,8 @@ const MAX_RANGE := 40.0
 var tick := 0
 var time := 0.0
 var rng := RandomNumberGenerator.new()
-var walls: Array[Rect2] = [] # metres, not saved (taken from the level)
+var walls: Array[PackedVector2Array] = [] # convex footprints in metres, not saved (taken from the level)
+var wall_boxes: Array[Rect2] = [] # broad-phase boxes for walls
 var water: Array[PackedVector2Array] = [] # impassable water
 var walkable: Array[PackedVector2Array] = [] # bridges over water
 var players: Dictionary = {} # pid -> Dictionary
@@ -96,45 +97,54 @@ func in_water(pos: Vector2) -> bool:
 	return false
 
 
+func set_walls(polys: Array) -> void:
+	walls = []
+	wall_boxes = []
+	for p in polys:
+		walls.append(p)
+		var lo := Vector2(INF, INF)
+		var hi := Vector2(-INF, -INF)
+		for v in p:
+			lo = lo.min(v)
+			hi = hi.max(v)
+		wall_boxes.append(Rect2(lo, hi - lo))
+
+
+static func rect_poly(r: Rect2) -> PackedVector2Array:
+	return PackedVector2Array([r.position, Vector2(r.end.x, r.position.y), r.end, Vector2(r.position.x, r.end.y)])
+
+
 func hits_wall(pos: Vector2) -> bool:
 	if in_water(pos):
 		return true
-	for r in walls:
-		var nearest := Vector2(clampf(pos.x, r.position.x, r.end.x), clampf(pos.y, r.position.y, r.end.y))
-		if pos.distance_squared_to(nearest) < PLAYER_RADIUS * PLAYER_RADIUS:
+	var r2 := PLAYER_RADIUS * PLAYER_RADIUS
+	for i in walls.size():
+		if not wall_boxes[i].grow(PLAYER_RADIUS).has_point(pos):
+			continue
+		var poly := walls[i]
+		if Geometry2D.is_point_in_polygon(pos, poly):
 			return true
+		for k in poly.size():
+			var q: Vector2 = Geometry2D.get_closest_point_to_segment(pos, poly[k], poly[(k + 1) % poly.size()])
+			if pos.distance_squared_to(q) < r2:
+				return true
 	return false
 
 
 ## Distance to the first wall along the ray (or max_dist).
 func ray_cast(origin: Vector2, dir: Vector2, max_dist: float) -> float:
 	var best := max_dist
-	for r in walls:
-		var t := _ray_rect(origin, dir, r)
-		if t >= 0.0 and t < best:
-			best = t
+	var end := origin + dir * max_dist
+	var ray_box := Rect2(origin, Vector2.ZERO).expand(end)
+	for i in walls.size():
+		if not wall_boxes[i].intersects(ray_box):
+			continue
+		var poly := walls[i]
+		for k in poly.size():
+			var hit = Geometry2D.segment_intersects_segment(origin, end, poly[k], poly[(k + 1) % poly.size()])
+			if hit != null:
+				best = minf(best, origin.distance_to(hit))
 	return best
-
-
-static func _ray_rect(o: Vector2, d: Vector2, r: Rect2) -> float:
-	var tmin := -INF
-	var tmax := INF
-	for axis in 2:
-		var oa: float = o[axis]
-		var da: float = d[axis]
-		var lo: float = r.position[axis]
-		var hi: float = r.end[axis]
-		if absf(da) < 0.000001:
-			if oa < lo or oa > hi:
-				return -1.0
-		else:
-			var t1 := (lo - oa) / da
-			var t2 := (hi - oa) / da
-			tmin = maxf(tmin, minf(t1, t2))
-			tmax = minf(tmax, maxf(t1, t2))
-	if tmax < tmin or tmax < 0.0:
-		return -1.0
-	return maxf(tmin, 0.0)
 
 
 func to_dict() -> Dictionary:

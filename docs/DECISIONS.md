@@ -25,4 +25,7 @@ Rule: when material from the earlier Wastland project conflicts with the Block-9
 ## Repository rules (owner, 2026-11-20)
 - Everything pushed to GitHub is in English (or Ukrainian), no Russian.
 - Z layers are called "layers N" (layer N), in code, configs and docs.
-- High-rises must be visible at once at the start of a level (panel blocks of 5-16 floors, the nearest are forced next to the spawn).
+- High-rises must be visible at once at the start of a level (a microdistrict of panel blocks next to the spawn).
+- Real-world scale: human 1.75 m, floor 2.8 m, car 4.5 m; isometric vertical scale derived from the projection (39.19 px per metre of height).
+- Building heights range from single-storey private houses (3.2 m) up to 9-floor panel blocks (25.2 m); nothing taller (owner, 2026-11-20). CIS panel style of the 2000s: 5- and 9-floor slabs and point towers, glazed loggias, antennas.
+- Streets and roads must not be only rectangular: bent grids at two orientations, diagonal connectors, buildings oriented along the street (rotated footprints).
