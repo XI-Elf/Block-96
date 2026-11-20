@@ -1,0 +1,220 @@
+{
+ "_note": "Districts from the city map scan (1:25000; grid columns 01-24, rows A-L on the map = 1-11 top to bottom). 'anchor' is the cell where the district label sits (approximate, +-1 cell); district polygons are not digitized yet. One map cell is about 1.5 km.",
+ "grid": {
+  "cols": 24,
+  "rows": 11,
+  "scale": "1:25000",
+  "contour_interval_m": 5,
+  "cell_km_approx": 1.5
+ },
+ "river_splits_city": true,
+ "districts": [
+  {
+   "id": "kazanskaya_sloboda",
+   "name": "Kazanska Sloboda",
+   "anchor": {
+    "col": 12,
+    "row": 5
+   },
+   "status": "central"
+  },
+  {
+   "id": "derbyshki",
+   "name": "Derbyshky",
+   "anchor": {
+    "col": 13,
+    "row": 4
+   }
+  },
+  {
+   "id": "sormovka",
+   "name": "Sormovka",
+   "anchor": {
+    "col": 12,
+    "row": 2
+   }
+  },
+  {
+   "id": "pavlov_yar",
+   "name": "Pavlov Yar",
+   "anchor": {
+    "col": 9,
+    "row": 4
+   }
+  },
+  {
+   "id": "saltovka",
+   "name": "Saltivka",
+   "anchor": {
+    "col": 6,
+    "row": 3
+   }
+  },
+  {
+   "id": "traktorny",
+   "name": "Traktorny",
+   "anchor": {
+    "col": 6,
+    "row": 4
+   }
+  },
+  {
+   "id": "zavodskoy",
+   "name": "Zavodskoy",
+   "anchor": {
+    "col": 6,
+    "row": 6
+   }
+  },
+  {
+   "id": "ilyinka",
+   "name": "Ilyinka",
+   "anchor": {
+    "col": 9,
+    "row": 6
+   }
+  },
+  {
+   "id": "zarechye",
+   "name": "Zarichchia",
+   "anchor": {
+    "col": 11,
+    "row": 7
+   }
+  },
+  {
+   "id": "pokrovka",
+   "name": "Pokrovka",
+   "anchor": {
+    "col": 8,
+    "row": 7
+   }
+  },
+  {
+   "id": "novozavodskoy",
+   "name": "Novozavodskoy",
+   "anchor": {
+    "col": 7,
+    "row": 9
+   }
+  },
+  {
+   "id": "luki",
+   "name": "Luky",
+   "anchor": {
+    "col": 3,
+    "row": 9
+   }
+  },
+  {
+   "id": "borisoglebsky",
+   "name": "Borysohlibsky",
+   "anchor": {
+    "col": 6,
+    "row": 11
+   }
+  },
+  {
+   "id": "yuzhny",
+   "name": "Pivdenny",
+   "anchor": {
+    "col": 10,
+    "row": 9
+   }
+  },
+  {
+   "id": "kirovsky",
+   "name": "Kirovsky",
+   "anchor": {
+    "col": 13,
+    "row": 10
+   }
+  },
+  {
+   "id": "krasny_bor",
+   "name": "Krasny Bor",
+   "anchor": {
+    "col": 16,
+    "row": 9
+   }
+  },
+  {
+   "id": "monastyrskaya_sloboda",
+   "name": "Monastyrska Sloboda",
+   "anchor": {
+    "col": 14,
+    "row": 8
+   },
+   "status": "island",
+   "note": "peninsula inside the river bend, bridge to the south"
+  },
+  {
+   "id": "rechnoy",
+   "name": "Rechnoy",
+   "anchor": {
+    "col": 22,
+    "row": 9
+   },
+   "status": "port",
+   "note": "port and quarries"
+  },
+  {
+   "id": "sudostroitelny",
+   "name": "Sudnobudivny",
+   "anchor": {
+    "col": 16,
+    "row": 7
+   }
+  },
+  {
+   "id": "levoberezhny",
+   "name": "Livoberezhny",
+   "anchor": {
+    "col": 20,
+    "row": 6
+   }
+  },
+  {
+   "id": "severny",
+   "name": "Pivnichny",
+   "anchor": {
+    "col": 20,
+    "row": 3
+   }
+  },
+  {
+   "id": "nagorny",
+   "name": "Nagirny",
+   "anchor": {
+    "col": 17,
+    "row": 5
+   }
+  },
+  {
+   "id": "kompressorny",
+   "name": "Kompresorny",
+   "anchor": {
+    "col": 16,
+    "row": 4
+   }
+  },
+  {
+   "id": "aviastroy",
+   "name": "Aviabud",
+   "anchor": {
+    "col": 16,
+    "row": 2
+   }
+  },
+  {
+   "id": "kholodnaya_gora",
+   "name": "Cold Hill",
+   "anchor": {
+    "col": 3,
+    "row": 6
+   },
+   "status": "hill",
+   "note": "hill in the west"
+  }
+ ]
+}

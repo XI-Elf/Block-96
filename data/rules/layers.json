@@ -1,0 +1,12 @@
+{
+  "_note": "Layer N. Values +1..+15 are floors; the exact floor height in metres is not decided.",
+  "axis": ["x", "y", "n"],
+  "layers": [
+    {"id": "layer_16", "n": 16, "name": "High-rises, roofs (top)", "kind": "above"},
+    {"id": "layers_1_15", "n_range": [1, 15], "name": "Floors and roofs", "kind": "above"},
+    {"id": "layer_0", "n": 0, "name": "Streets, courtyards, industrial zones", "kind": "surface"},
+    {"id": "layer_-1", "n": -1, "name": "Metro and underground tram", "kind": "underground"},
+    {"id": "layer_-2", "n": -2, "name": "Sewers, utility collectors", "kind": "underground"}
+  ],
+  "visibility": {"cones": true, "cross_layer_sight": "TBD", "sound_propagates_between_layers": true}
+}

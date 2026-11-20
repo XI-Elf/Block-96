@@ -1,0 +1,73 @@
+{
+  "_note": "Draft rules. Placeholder numbers (null) are decided by the owner.",
+  "grid": {
+    "cell": "invisible_3d",
+    "axes": [
+      "x",
+      "y",
+      "n"
+    ],
+    "independent_of_districts": true
+  },
+  "marks": [
+    {
+      "id": "kiosk",
+      "size": [
+        2,
+        2
+      ]
+    },
+    {
+      "id": "garage",
+      "size": [
+        3,
+        3
+      ]
+    },
+    {
+      "id": "apt_door",
+      "size": [
+        3,
+        3
+      ]
+    },
+    {
+      "id": "house_gate",
+      "size": [
+        5,
+        5
+      ]
+    },
+    {
+      "id": "gang_mural",
+      "size": [
+        15,
+        15
+      ],
+      "min": true
+    }
+  ],
+  "merge": {
+    "rule": "adjacent marks of one group merge into a polygon"
+  },
+  "upkeep": {
+    "currency": "energy_token",
+    "per_cell_per_day": null,
+    "no_tokens": "signal fades; mark can be repainted by others"
+  },
+  "vulnerability": {
+    "window": "power_outage",
+    "duration": null
+  },
+  "strategic_points": {
+    "types": [
+      "metro",
+      "chp",
+      "bridge",
+      "unfinished_highrise"
+    ],
+    "mode": "PvPvE",
+    "claimable": false
+  },
+  "marks_only_on_control_points": true
+}
