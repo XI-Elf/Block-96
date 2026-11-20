@@ -5,6 +5,9 @@ const LEVEL_PATH := "res://data/levels/pavlov_yar.json"
 const PLAYER_ID := 1
 const TRACER_TTL := 0.12
 const CHEST_M := 1.25 # weapon height
+const ZOOM_DEFAULT := 1.0
+const ZOOM_MIN := 0.5
+const ZOOM_MAX := 2.0
 
 var level: Level
 var state: GameState
@@ -39,7 +42,7 @@ func _ready() -> void:
 	overlay.draw.connect(_draw_overlay)
 	add_child(overlay)
 	camera = Camera2D.new()
-	camera.zoom = Vector2(0.5, 0.5) # a human is ~35 px tall, a 9-floor block ~550 px
+	camera.zoom = Vector2(ZOOM_DEFAULT, ZOOM_DEFAULT) # a human is ~70 px tall at 1.0
 	add_child(camera)
 	var layer := CanvasLayer.new()
 	hud = Label.new()
@@ -63,6 +66,16 @@ func _physics_process(dt: float) -> void:
 	for t in tracers:
 		t.ttl -= dt
 	tracers = tracers.filter(func(t): return t.ttl > 0.0)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed:
+		var z := camera.zoom.x
+		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
+			z = minf(z * 1.1, ZOOM_MAX)
+		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+			z = maxf(z / 1.1, ZOOM_MIN)
+		camera.zoom = Vector2(z, z)
 
 
 func _unhandled_key_input(event: InputEvent) -> void:
@@ -94,7 +107,7 @@ func _process(_dt: float) -> void:
 			z_back = mini(z_back, v.z_index)
 		v.set_faded(not in_front and v.b.box.has_point(chest))
 	player_view.z_index = clampi(z_front + 1 if z_front + 1 < z_back else z_back - 1, -3999, 3999)
-	hud.text = "HP %d   Ammo %d/%d%s   [WASD] move  [LMB] fire  [R] reload  [F5] save  [F9] load" % [
+	hud.text = "HP %d   Ammo %d/%d%s   [WASD] move  [LMB] fire  [R] reload  [F5] save  [F9] load  [wheel] zoom" % [
 		p.hp, p.ammo, GameState.MAG_SIZE, "  reloading..." if p.reload > 0.0 else ""]
 	overlay.queue_redraw()
 

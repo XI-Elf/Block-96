@@ -31,6 +31,6 @@ Scout and loot → tactical combat (vision cones, sound through floors and tunne
 ## Run
 Requires Godot 4.3. Open the project folder in the editor and press F5, or run `godot --path .`.
 Logic tests: `godot --headless -s tests/run_tests.gd` (expect `RESULT: OK`).
-Controls: WASD move, LMB fire, R reload, F5/F9 save/load.
+Controls: WASD move, LMB fire, R reload, F5/F9 save/load, mouse wheel zoom.
 
 The setting is original; we do not reuse names, characters, or art from existing games.
