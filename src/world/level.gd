@@ -1,11 +1,27 @@
 class_name Level
 extends RefCounted
-## Загрузка уровня из JSON: стены (метры) и точка появления.
+## Загрузка уровня из JSON (генерируется tools/gen_pavlov_yar.py). Единицы — метры.
 
+var name := ""
 var size := Vector2(100, 100)
 var spawn := Vector2(10, 10)
-var walls: Array[Rect2] = []
-var name := ""
+var buildings: Array = []            # {rect: Rect2, h: float, kind: String}
+var walls: Array[Rect2] = []         # коллизия (здания, барьеры)
+var water: Array[PackedVector2Array] = []
+var walkable: Array[PackedVector2Array] = []  # мосты: можно идти по воде
+var parks: Array[PackedVector2Array] = []
+var roads: Array = []                # {type, w, polys: Array[PackedVector2Array]}
+var streets: Array = []              # Array[PackedVector2Array] (полилинии)
+var bridges: Array = []              # {w, pts, polys}
+var railways: Array = []
+var blockposts: Array = []           # {id, pos, dir}
+
+
+static func _pts(arr: Array) -> PackedVector2Array:
+	var out := PackedVector2Array()
+	for p in arr:
+		out.append(Vector2(p[0], p[1]))
+	return out
 
 
 static func load_from(path: String) -> Level:
@@ -21,6 +37,27 @@ static func load_from(path: String) -> Level:
 	lv.name = data.get("name", "")
 	lv.size = Vector2(data.size[0], data.size[1])
 	lv.spawn = Vector2(data.spawn[0], data.spawn[1])
-	for w in data.walls:
-		lv.walls.append(Rect2(w[0], w[1], w[2], w[3]))
+	for b in data.get("buildings", []):
+		var r := Rect2(b[0], b[1], b[2], b[3])
+		lv.buildings.append({"rect": r, "h": float(b[4]), "kind": b[5]})
+		lv.walls.append(r)
+	for w in data.get("water", []):
+		lv.water.append(_pts(w))
+	for pk in data.get("parks", []):
+		lv.parks.append(_pts(pk))
+	for r in data.get("roads", []):
+		var pts := _pts(r.pts)
+		lv.roads.append({"type": r.type, "w": float(r.w), "polys": Geometry2D.offset_polyline(pts, r.w * 0.5)})
+	for s in data.get("streets", []):
+		lv.streets.append(_pts(s))
+	for br in data.get("bridges", []):
+		var pts := _pts(br.pts)
+		var polys := Geometry2D.offset_polyline(pts, br.w * 0.5)
+		lv.bridges.append({"w": float(br.w), "pts": pts, "polys": polys})
+		for pl in polys:
+			lv.walkable.append(pl)
+	for rw in data.get("railways", []):
+		lv.railways.append(_pts(rw))
+	for bp in data.get("blockposts", []):
+		lv.blockposts.append({"id": bp.id, "pos": Vector2(bp.pos[0], bp.pos[1]), "dir": Vector2(bp.dir[0], bp.dir[1])})
 	return lv

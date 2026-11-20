@@ -17,12 +17,18 @@ func cmd(move := Vector2.ZERO, aim := Vector2(1000, 0), fire := false, reload :=
 
 
 func _init() -> void:
-	var lv := Level.load_from("res://data/levels/pavlov_yar_blockout.json")
+	var lv := Level.load_from("res://data/levels/pavlov_yar.json")
 	check(lv != null and lv.walls.size() > 0, "уровень загружается")
 	var st := GameState.new(7)
 	st.walls = lv.walls
+	st.water = lv.water
+	st.walkable = lv.walkable
 	st.add_player(1, lv.spawn)
 	check(not st.hits_wall(lv.spawn), "точка появления не в стене")
+
+	# вода и мосты
+	check(lv.water.size() > 0 and lv.bridges.size() == 2 and lv.blockposts.size() == 2, "река, 2 моста, 2 блокпоста")
+	check(st.in_water(Vector2(380, 175)) and not st.hits_wall(lv.bridges[0].pts[0].lerp(lv.bridges[0].pts[1], 0.5)) , "вода непроходима, мост проходим")
 
 	# движение и столкновения
 	var p0: Vector2 = st.players[1].pos
@@ -75,9 +81,11 @@ func _init() -> void:
 
 
 func _run_scripted(seed_value: int) -> GameState:
-	var lv := Level.load_from("res://data/levels/pavlov_yar_blockout.json")
+	var lv := Level.load_from("res://data/levels/pavlov_yar.json")
 	var s := GameState.new(seed_value)
 	s.walls = lv.walls
+	s.water = lv.water
+	s.walkable = lv.walkable
 	s.add_player(1, lv.spawn)
 	for i in 240:
 		s.step([cmd(Vector2(sin(i * 0.05), cos(i * 0.07)), Vector2(60 + i % 7, 66), i % 5 == 0)], 1.0 / 60.0)

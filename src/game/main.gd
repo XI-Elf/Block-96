@@ -1,9 +1,8 @@
 extends Node2D
 ## Клиент одиночной игры: ввод -> команда -> GameState.step -> отрисовка.
 
-const LEVEL_PATH := "res://data/levels/pavlov_yar_blockout.json"
+const LEVEL_PATH := "res://data/levels/pavlov_yar.json"
 const PLAYER_ID := 1
-const WALL_HEIGHT_M := 4.0
 const TRACER_TTL := 0.12
 
 var level: Level
@@ -18,6 +17,8 @@ func _ready() -> void:
 	level = Level.load_from(LEVEL_PATH)
 	state = GameState.new(1)
 	state.walls = level.walls
+	state.water = level.water
+	state.walkable = level.walkable
 	state.add_player(PLAYER_ID, level.spawn)
 	camera = Camera2D.new()
 	add_child(camera)
@@ -73,45 +74,84 @@ func _read_move() -> Vector2:
 	return v.normalized() if v != Vector2.ZERO else v
 
 
+func _poly_screen(poly: PackedVector2Array) -> PackedVector2Array:
+	var out := PackedVector2Array()
+	for p in poly:
+		out.append(Iso.to_screen(p))
+	return out
+
+
+func _fill(poly: PackedVector2Array, col: Color) -> void:
+	if poly.size() >= 3 and not Geometry2D.triangulate_polygon(poly).is_empty():
+		draw_colored_polygon(_poly_screen(poly), col)
+
+
+func _line_world(pts: PackedVector2Array, col: Color, width: float) -> void:
+	for i in range(pts.size() - 1):
+		draw_line(Iso.to_screen(pts[i]), Iso.to_screen(pts[i + 1]), col, width)
+
+
 func _draw() -> void:
 	if level == null:
 		return
-	# земля
 	var s := level.size
-	draw_colored_polygon(PackedVector2Array([
-		Iso.to_screen(Vector2(0, 0)), Iso.to_screen(Vector2(s.x, 0)),
-		Iso.to_screen(s), Iso.to_screen(Vector2(0, s.y))]), Color("1b1f2a"))
-	for i in range(0, int(s.x) + 1, 2):
-		draw_line(Iso.to_screen(Vector2(i, 0)), Iso.to_screen(Vector2(i, s.y)), Color(1, 1, 1, 0.05))
-	for j in range(0, int(s.y) + 1, 2):
-		draw_line(Iso.to_screen(Vector2(0, j)), Iso.to_screen(Vector2(s.x, j)), Color(1, 1, 1, 0.05))
-	# стены и игрок в порядке глубины (грубая сортировка по x+y)
+	_fill(PackedVector2Array([Vector2(0, 0), Vector2(s.x, 0), s, Vector2(0, s.y)]), Color("1b1f2a"))
+	for pk in level.parks:
+		_fill(pk, Color("243c2c"))
+	for w in level.water:
+		_fill(w, Color("284670"))
+	for r in level.roads:
+		var col := Color("4d4d58") if r.type == "main" else Color("42424e")
+		for poly in r.polys:
+			_fill(poly, col)
+	for st in level.streets:
+		for poly in Geometry2D.offset_polyline(st, 3.0):
+			_fill(poly, Color("3a3a46"))
+	for rw in level.railways:
+		_line_world(rw, Color("14141a"), 3.0)
+		_line_world(rw, Color(0.7, 0.7, 0.7, 0.5), 1.0)
+	for br in level.bridges:
+		for poly in br.polys:
+			_fill(poly, Color("736a60"))
+	# здания, барьеры, будки и игрок — в порядке глубины (грубая сортировка по x+y)
 	var items: Array = []
-	for r in level.walls:
-		items.append({"key": r.end.x + r.end.y, "wall": r})
+	for b in level.buildings:
+		items.append({"key": b.rect.end.x + b.rect.end.y, "b": b})
 	var p: Dictionary = state.players[PLAYER_ID]
 	items.append({"key": p.pos.x + p.pos.y + 1.0, "player": true})
 	items.sort_custom(func(a, b): return a.key < b.key)
 	for it in items:
-		if it.has("wall"):
-			_draw_wall(it.wall)
+		if it.has("b"):
+			_draw_building(it.b)
 		else:
 			_draw_player(p)
-	# трассеры
+	# силуэт игрока поверх зданий, если он за ними
+	draw_circle(Iso.to_screen(p.pos), 9.0, Color(1, 1, 1, 0.35))
 	for t in tracers:
 		draw_line(Iso.to_screen(t.from), Iso.to_screen(t.to), Color(1, 1, 1, 0.9), 2.0)
 	_draw_aim(p)
 
 
-func _draw_wall(r: Rect2) -> void:
-	var h := Vector2(0, -WALL_HEIGHT_M * Iso.PX_PER_M_HEIGHT)
+const KIND_COLORS := {
+	"house": [Color("3a3f55"), Color("2c3045"), Color("4b5170")],
+	"garage_row": [Color("45454f"), Color("33333c"), Color("585865")],
+	"shed": [Color("4a3f3a"), Color("372f2b"), Color("5e504a")],
+	"barrier": [Color("7a2f2f"), Color("5a2222"), Color("9a4040")],
+	"booth": [Color("55604a"), Color("3f4837"), Color("6d7a5e")],
+}
+
+
+func _draw_building(b: Dictionary) -> void:
+	var r: Rect2 = b.rect
+	var cols: Array = KIND_COLORS.get(b.kind, KIND_COLORS.house)
+	var h := Vector2(0, -b.h * Iso.PX_PER_M_HEIGHT)
 	var a := Iso.to_screen(r.position)
-	var b := Iso.to_screen(Vector2(r.end.x, r.position.y))
+	var bb := Iso.to_screen(Vector2(r.end.x, r.position.y))
 	var c := Iso.to_screen(r.end)
 	var d := Iso.to_screen(Vector2(r.position.x, r.end.y))
-	draw_colored_polygon(PackedVector2Array([d, c, c + h, d + h]), Color("3a3f55"))
-	draw_colored_polygon(PackedVector2Array([b, c, c + h, b + h]), Color("2c3045"))
-	draw_colored_polygon(PackedVector2Array([a + h, b + h, c + h, d + h]), Color("4b5170"))
+	draw_colored_polygon(PackedVector2Array([d, c, c + h, d + h]), cols[0])
+	draw_colored_polygon(PackedVector2Array([bb, c, c + h, bb + h]), cols[1])
+	draw_colored_polygon(PackedVector2Array([a + h, bb + h, c + h, d + h]), cols[2])
 
 
 func _draw_player(p: Dictionary) -> void:

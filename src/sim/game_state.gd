@@ -15,6 +15,8 @@ var tick := 0
 var time := 0.0
 var rng := RandomNumberGenerator.new()
 var walls: Array[Rect2] = [] # метры, не сохраняются (берутся из уровня)
+var water: Array[PackedVector2Array] = [] # непроходимая вода
+var walkable: Array[PackedVector2Array] = [] # мосты над водой
 var players: Dictionary = {} # pid -> Dictionary
 var events: Array = []
 
@@ -84,7 +86,19 @@ func _move(p: Dictionary, delta: Vector2) -> void:
 	p.pos = pos
 
 
+func in_water(pos: Vector2) -> bool:
+	for w in water:
+		if Geometry2D.is_point_in_polygon(pos, w):
+			for b in walkable:
+				if Geometry2D.is_point_in_polygon(pos, b):
+					return false
+			return true
+	return false
+
+
 func hits_wall(pos: Vector2) -> bool:
+	if in_water(pos):
+		return true
 	for r in walls:
 		var nearest := Vector2(clampf(pos.x, r.position.x, r.end.x), clampf(pos.y, r.position.y, r.end.y))
 		if pos.distance_squared_to(nearest) < PLAYER_RADIUS * PLAYER_RADIUS:
