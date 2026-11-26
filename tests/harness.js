@@ -1,6 +1,6 @@
 // Headless Block-96 sim harness (node). Usage: const H = require('./harness'); const {s, step} = H.boot({hour:12, home:'novozavodskoy'})
 const vm = require('vm'), fs = require('fs'), path = require('path');
-const ROOT = process.env.B96_ROOT || '/tmp/claude-0/work/proto';
+const ROOT = path.resolve(process.env.B96_ROOT || path.join(__dirname, '..'));
 function load(extra) {
   const win = { addEventListener() {}, location: { search: '' }, devicePixelRatio: 1, innerWidth: 1280, innerHeight: 720 };
   win.window = win; win.performance = performance;
