@@ -55,15 +55,17 @@ function freeze(h, keep) { for (const e of h.s.enemies) if (e !== keep && !(keep
 function setup(h, e, dist) { for (const o of h.s.enemies) if (o !== e && h.s.sq[o.sq] !== h.s.sq[e.sq]) { o.x = -9000 - o.id; o.y = -9000; } return putPlayerBefore(h, e, dist); }
 
 // ---------- 3. PPS: WARN_HOLSTER 3 s by day ----------
-{ const h = scenario(12, 'pavlov_yar'); const m = mobOf(h, (e, q, d) => d.fac === 'admin' && q && q.zone === 'novozavodskoy' && !q.post);
+{ const patrol = (e, q, d) => d.fac === 'admin' && d.idle === 'patrol' && q && q.zone === 'novozavodskoy' && q.members.length === 3 && e.id === q.members[0];
+  const h = scenario(12, 'pavlov_yar'); const m = mobOf(h, patrol);
   ok(!!m, 'a PPS squad exists in Novozavodskoy by day');
   if (m) { ok(h.s.sq[m.sq].members.length === 3, 'PPS patrol squad has 3 members'); ok(setup(h, m, 80), 'player placed in sight of PPS');
     h.cmd = {}; h.step(1.5); ok(m.m !== 'combat' && m.m !== 'warn' && h.w.WL_ENEMIES.stanceOf(h.s, m) === 'neutral', 'holstered stranger by day: PPS does not react (stance neutral)');
+    ok(h.w.WL_VISION.mobSees(h.s, m, h.p, h.S.API), 'PPS still sees the player before warning');
     h.cmd = { aim: true }; h.step(0.7); ok(m.m === 'warn' && m.ai === 'WARN_HOLSTER', 'weapon out: state WARN_HOLSTER');
     h.step(1.8); ok(m.m === 'warn', 'still warning before 3 s');
     h.step(1.8); ok(m.m === 'combat', 'weapon still out after 3 s: COMBAT_ENGAGE'); }
-  const h2 = scenario(12, 'pavlov_yar'); const m2 = mobOf(h2, (e, q, d) => d.fac === 'admin' && q && q.zone === 'novozavodskoy' && !q.post);
-  if (m2) { setup(h2, m2, 80); h2.cmd = { aim: true }; h2.step(0.7); const warned = m2.m === 'warn'; h2.step(1.0); h2.cmd = {}; h2.step(1.0); ok(warned && m2.m !== 'combat' && m2.m !== 'warn', 'holstered within 3 s: PPS stands down'); }
+  const h2 = scenario(12, 'pavlov_yar'); const m2 = mobOf(h2, patrol);
+  if (m2) { ok(setup(h2, m2, 80) && h2.w.WL_VISION.mobSees(h2.s, m2, h2.p, h2.S.API), 'PPS sees the player before holster scenario'); h2.cmd = { aim: true }; h2.step(0.7); const warned = m2.m === 'warn'; h2.step(1.0); h2.cmd = {}; h2.step(1.0); ok(warned && m2.m !== 'combat' && m2.m !== 'warn', 'holstered within 3 s: PPS stands down'); }
   const h3 = scenario(22, 'pavlov_yar'); const m3 = mobOf(h3, (e, q, d) => d.fac === 'admin' && q && q.zone === 'novozavodskoy');
   if (m3) { setup(h3, m3, 80); h3.cmd = { aim: true }; h3.step(1.2); ok(m3.m === 'warn' || m3.m === 'combat', 'v61: night in an Administration district: same order rules as by day (warning first, no curfew shooting)'); } }
 
@@ -98,9 +100,10 @@ function setup(h, e, dist) { for (const o of h.s.enemies) if (o !== e && h.s.sq[
   ok(h.s.sq[patrol.sq].known && h.s.sq[patrol.sq].known.t > 0, 'elder alerts the gang patrol within 120 m (DistrictAlertEvent)'); }
 { const h = scenario(12, 'pavlov_yar'); const e = mobOf(h, (e, q) => e.type === 'civ' && q && q.zone === 'holodnaya_gora'); e.arch = 'CIV_TEEN'; e.sightK = 1.15;
   setup(h, e, 100); h.cmd = {}; h.step(1.5); ok(e.report || e.ai === 'REPORT_THREAT' || e.fleeT > 0, 'teen scout reports a stranger (REPORT_THREAT)'); }
-{ const h = scenario(12, 'pavlov_yar'); const e = mobOf(h, (e, q) => e.type === 'civ' && q && q.zone === 'pavlov_yar'); setup(h, e, 30); const before = (h.p.inv.find(i => i.id === 'token') || { n: 0 }).n;
-  h.cmd = { aim: true }; h.p.ax = e.x; h.p.ay = e.y; let got = 0; for (let i = 0; i < 20 && !got; i++) { e.paid = false; h.step(0.1); got = ((h.p.inv.find(i => i.id === 'token') || { n: 0 }).n) - before; if (got) break; }
-  ok(e.paid, 'aiming at a civilian at < 4 m triggers the token roll (65%)'); }
+{ const h = scenario(12, 'pavlov_yar'); const e = mobOf(h, (e, q) => e.type === 'civ' && q && q.zone === 'pavlov_yar'); ok(setup(h, e, 30), 'player placed within 4 m of civilian'); const before = (h.p.inv.find(i => i.id === 'token') || { n: 0 }).n;
+  h.cmd = { aim: true, ax: e.x, ay: e.y }; h.step(0.1);
+  const got = ((h.p.inv.find(i => i.id === 'token') || { n: 0 }).n) - before;
+  ok(e.paid && h.w.WL_BEH.TOKEN_DROP === 0.65 && got >= 0 && got <= 3, 'aiming at a civilian at < 4 m triggers one 65% token roll'); }
 
 // ---------- 8. gunfire: civilians flee, Shakal waits and loots ----------
 { const h = scenario(12, 'pavlov_yar'); const e = mobOf(h, (e) => e.type === 'civ'); setup(h, e, 100);

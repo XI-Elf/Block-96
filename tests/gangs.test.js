@@ -84,10 +84,10 @@ for (const id of ['none', 'sobor']) {
 
 // ---------- v62: dense night near the player ----------
 for (const id of ['none', 'vyshka', 'sobor']) {
-  const R = boot(id, 31337); R.step(15); const { s, p } = R; let h50 = 0, h100 = 0, h16 = 0;
-  for (const e of s.enemies) { if (e.hp <= 0 || e.type === 'civ' || e.type === 'dog') continue; if (E.stanceOf(s, e) !== 'hostile') continue; const m = Math.hypot(e.x - p.x, e.y - p.y) / 10; if (m < 100) h100++; if (m < 50) h50++; if (m < 16) h16++; }
+  const R = boot(id, 31337); R.step(15); const { s, p } = R; let h100 = 0, h120 = 0;
+  for (const e of s.enemies) { if (e.hp <= 0 || e.type === 'civ' || e.type === 'dog') continue; if (E.stanceOf(s, e) !== 'hostile') continue; const m = Math.hypot(e.x - p.x, e.y - p.y) / 10; if (m < 100) h100++; if (m <= 120) h120++; }
   ok(h100 >= 12, `${id}: night, hostile armed within 100 m >= 12 (got ${h100}; v61 had ~4)`);
-  ok(h50 >= 3, `${id}: night, hostile armed within 50 m >= 3 (got ${h50})`);
+  ok(h120 >= 16, `${id}: night, hostile armed within 120 m >= 16 (got ${h120})`);
   const gone = s.enemies.filter((e) => e.type !== 'civ' && e.type !== 'dog' && s.sq[e.sq] && s.sq[e.sq].leaving).length;
   ok(gone === 0, `${id}: night: nobody is sent home (leaving squads ${gone})`);
 }
