@@ -69,16 +69,21 @@
   function drawFog(ctx, s, p, V) {
     if (!s.map || s.mode === 'base' || p.dead || p.extracted) return;
     const API = window.WL_SIM.API, cv = ctx.canvas; if (!cv.width || !cv.height) return;
-    if (!ov || ov.width !== cv.width || ov.height !== cv.height) { ov = document.createElement('canvas'); ov.width = cv.width; ov.height = cv.height; octx = ov.getContext('2d'); }
+    // Keep one fog pixel per CSS pixel on high-DPR displays. Visibility checks stay full precision.
+    const naturalScale = Math.min(1, (cv.clientWidth || cv.width) / cv.width);
+    const scale = Math.max(0.5, Math.min(1, Number.isFinite(window.B96_FOG_SCALE) ? window.B96_FOG_SCALE : naturalScale));
+    const fogWidth = Math.max(1, Math.round(cv.width * scale)), fogHeight = Math.max(1, Math.round(cv.height * scale));
+    if (!ov || ov.width !== fogWidth || ov.height !== fogHeight) { ov = document.createElement('canvas'); ov.width = fogWidth; ov.height = fogHeight; octx = ov.getContext('2d'); }
     const polys = visPolygons(s, p, API), tr = ctx.getTransform();
     // 2) mask: everything outside the current view (no darkness: the map stays readable, just without colours)
     octx.setTransform(1, 0, 0, 1, 0, 0); octx.globalCompositeOperation = 'source-over'; octx.clearRect(0, 0, ov.width, ov.height);
     octx.fillStyle = VIS.greyTone; octx.fillRect(0, 0, ov.width, ov.height);
-    octx.setTransform(tr); octx.globalCompositeOperation = 'destination-out'; octx.fillStyle = '#000';
+    const sx = ov.width / cv.width, sy = ov.height / cv.height;
+    octx.setTransform(tr.a * sx, tr.b * sy, tr.c * sx, tr.d * sy, tr.e * sx, tr.f * sy); octx.globalCompositeOperation = 'destination-out'; octx.fillStyle = '#000';
     for (const poly of polys) { octx.beginPath(); poly.forEach((q, i) => i ? octx.lineTo(q.x - V.cam.x, q.y - V.cam.y) : octx.moveTo(q.x - V.cam.x, q.y - V.cam.y)); octx.closePath(); octx.fill(); }
     ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.globalCompositeOperation = 'saturation'; ctx.drawImage(ov, 0, 0);                         // strip colour
-    ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = VIS.greyVeil; ctx.drawImage(ov, 0, 0); // light grey veil
+    ctx.globalCompositeOperation = 'saturation'; ctx.drawImage(ov, 0, 0, cv.width, cv.height);                         // strip colour
+    ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = VIS.greyVeil; ctx.drawImage(ov, 0, 0, cv.width, cv.height); // light grey veil
     ctx.restore();
   }
   function reset() {}

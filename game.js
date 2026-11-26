@@ -614,9 +614,14 @@
     }
   }
   // свет фонарей: рисуется в отдельный слой по мере прохода списка глубин; здания впереди лампы вырезают её свет (painter), поэтому за домом лампа не светит
-  let lightCv = null, lctx = null;
+  let lightCv = null, lctx = null, lightScaleX = 1, lightScaleY = 1;
   function lightBegin() {
-    const cv = ctx.canvas; if (!lightCv || lightCv.width !== cv.width || lightCv.height !== cv.height) { lightCv = document.createElement('canvas'); lightCv.width = cv.width; lightCv.height = cv.height; lctx = lightCv.getContext('2d'); }
+    const cv = ctx.canvas;
+    const naturalScale = Math.min(1, (cv.clientWidth || cv.width) / cv.width);
+    const scale = Math.max(0.5, Math.min(1, Number.isFinite(window.B96_LIGHT_SCALE) ? window.B96_LIGHT_SCALE : naturalScale));
+    const width = Math.max(1, Math.round(cv.width * scale)), height = Math.max(1, Math.round(cv.height * scale));
+    if (!lightCv || lightCv.width !== width || lightCv.height !== height) { lightCv = document.createElement('canvas'); lightCv.width = width; lightCv.height = height; lctx = lightCv.getContext('2d'); }
+    lightScaleX = lightCv.width / cv.width; lightScaleY = lightCv.height / cv.height;
     lctx.setTransform(1, 0, 0, 1, 0, 0); lctx.globalCompositeOperation = 'source-over'; lctx.globalAlpha = 1; lctx.clearRect(0, 0, lightCv.width, lightCv.height);
   }
   // Canvas Light2D equivalent: independent sprite, 2D collider and photometric light per lamp.
@@ -651,7 +656,7 @@
     const radius=Math.max(25,Math.min(165,range*spread*0.64*Kx));
     if (hx < -210 || hx > W+210 || hy > H+210 || gy < -210 || gy > H+210) return;
     lctx.save();
-    lctx.setTransform(DPR,0,0,DPR,0,0);
+    lctx.setTransform(DPR * lightScaleX,0,0,DPR * lightScaleY,0,0);
     lctx.globalCompositeOperation='lighter';
     // Photometric footprint: layered radial distribution, elliptical due to ground projection.
     // No quadrilateral/triangle geometry: beam has no visible hard edges in clear winter air.
@@ -685,9 +690,9 @@
   }
   function lightOcclude(b) { // дом, нарисованный позже лампы, закрывает её свет
     if (!lctx || b._Hm == null) return; const bp = b.poly.map(r => SCR(r.x, r.y)), Hf = MH(b._Hm), hl = hull(bp.concat(bp.map(r => ({ x: r.x, y: r.y - Hf }))));
-    lctx.setTransform(DPR, 0, 0, DPR, 0, 0); lctx.globalCompositeOperation = 'destination-out'; lctx.globalAlpha = 1; lctx.fillStyle = '#000'; lctx.beginPath(); hl.forEach((q, i) => i ? lctx.lineTo(q.x, q.y) : lctx.moveTo(q.x, q.y)); lctx.closePath(); lctx.fill();
+    lctx.setTransform(DPR * lightScaleX, 0, 0, DPR * lightScaleY, 0, 0); lctx.globalCompositeOperation = 'destination-out'; lctx.globalAlpha = 1; lctx.fillStyle = '#000'; lctx.beginPath(); hl.forEach((q, i) => i ? lctx.lineTo(q.x, q.y) : lctx.moveTo(q.x, q.y)); lctx.closePath(); lctx.fill();
   }
-  function flushLampLight() { if (!lightCv) return; ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalCompositeOperation = 'lighter'; ctx.drawImage(lightCv, 0, 0); ctx.restore(); }
+  function flushLampLight() { if (!lightCv) return; ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalCompositeOperation = 'lighter'; ctx.drawImage(lightCv, 0, 0, ctx.canvas.width, ctx.canvas.height); ctx.restore(); }
 const nightK = (h) => (h >= 17 || h < 9) ? 1 : h >= 16 ? (h - 16) : h >= 9 && h < 10 ? (10 - h) : 0; // день 10–16, сумерки 16–17, рассвет 9–10
   function drawLights() {
     ctx.save(); ctx.globalCompositeOperation = 'lighter';

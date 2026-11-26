@@ -62,23 +62,31 @@
       }
     return out;
   }
-  function rayWall(s, x0, y0, x1, y1) {
+  function rayWallHit(s, x0, y0, x1, y1, skipLow) {
+    const g = grid(s), walls = s.map.walls;
+    const seen = grid.seen && grid.seen.length >= walls.length ? grid.seen : (grid.seen = new Uint32Array(walls.length + 64));
+    grid.stamp = ((grid.stamp || 0) + 1) >>> 0;
+    if (!grid.stamp) { seen.fill(0); grid.stamp = 1; }
+    const stamp = grid.stamp;
     let best = -1;
-    for (const w of wallsNear(s, x0, y0, x1, y1)) {
-      if (w.low) continue; // низкие укрытия не блокируют обзор
-      const t = segAABB(x0, y0, x1, y1, w, 0);
-      if (t >= 0 && (best < 0 || t < best)) best = t;
-    }
+    for (let cx = Math.floor(Math.min(x0, x1) / CELL); cx <= Math.floor(Math.max(x0, x1) / CELL); cx++)
+      for (let cy = Math.floor(Math.min(y0, y1) / CELL); cy <= Math.floor(Math.max(y0, y1) / CELL); cy++) {
+        const indices = g.get(cx + ',' + cy);
+        if (!indices) continue;
+        for (const index of indices) {
+          if (seen[index] === stamp) continue;
+          seen[index] = stamp;
+          const wall = walls[index];
+          if (skipLow ? wall.low : wall.fly) continue;
+          const hit = segAABB(x0, y0, x1, y1, wall, 0);
+          if (hit >= 0 && (best < 0 || hit < best)) best = hit;
+        }
+      }
     return best;
   }
+  function rayWall(s, x0, y0, x1, y1) { return rayWallHit(s, x0, y0, x1, y1, true); }
   function rayWallAll(s, x0, y0, x1, y1) {
-    let best = -1;
-    for (const w of wallsNear(s, x0, y0, x1, y1)) {
-      if (w.fly) continue; // пули летят над водой
-      const t = segAABB(x0, y0, x1, y1, w, 0);
-      if (t >= 0 && (best < 0 || t < best)) best = t;
-    }
-    return best;
+    return rayWallHit(s, x0, y0, x1, y1, false);
   }
   const los = (s, a, b) => rayWall(s, a.x, a.y, b.x, b.y) < 0;
 
