@@ -1,108 +1,162 @@
-# Block-96: JS prototype (single-player)
+# Block-96
 
-Open `index.html` in a browser. No build step. Restored from the Wastland prototype and moved onto the Block-96 setting (2003, Ukrainian city, panel blocks and 2000s look).
+A single-player, top-down isometric extraction game that runs in a browser (plain JavaScript, canvas, no build step).
+You raid a large Ukrainian city in 2003, seven years after a catastrophe sealed it off: panel-block districts, gangs, a dark and snowy night, scavenging, cars, and a shelter with a permanent stash.
 
-## Files
-- `pavlov_yar.js`: level data for Pavlov Yar in metres (copy of `data/levels/pavlov_yar.json` from the Block-96 repository): river, bridges, roads, parks, railway, 96 oriented buildings (private houses 3.2 m up to 9-floor panel blocks 25.2 m).
-- `config.js`: all game data (weapons, items, loot tables, enemies, zones in `CITY`, stats).
-- `nav.js`: grid + A* for enemies. `sim.js`: deterministic simulation (no DOM, seeded random, commands in, events out). `game.js`: client (input, render, HUD, audio).
+This README describes the build as of **release v79**. Everything here is checked against the code unless it is marked *planned* or *unverified*.
+Rules that every contributor, human or AI, must follow are in [Project rules](#project-rules-mandatory) and in [AGENTS.md](AGENTS.md).
 
-## Who owns which file (parallel work)
-| File | Owner | Rule |
-|---|---|---|
-| `pavlov_yar.js`, `sim.js` (map generation: `genCity`, props, containers, zones), `game.js` (ground, buildings, props, camera, render order), `index.html`, `README.md` | Builder (city thread) | Only the builder publishes the artifact. |
-| `enemies.js`, enemy keys in `config.js` `ENEMIES`, `SPAWN` | Enemies/AI thread | Replace the enemy step via `window.WL_ENEMIES = { step(s, dt, API) }`. Do not edit `sim.js` enemy code; ask the builder if a hook is missing. |
-| `player.js`, `hud.js`, weapon/stamina keys in `config.js` | Movement/combat thread | Replace the player step via `window.WL_PLAYER = { step(s, p, cmd, dt, API) }` and the HUD via `window.WL_HUD = { update(s, p, ctx) }` (return `false` to fall back to the built-in HUD). |
+## Run it
 
-How modules connect: `index.html` loads `config.js`, `pavlov_yar.js`, `nav.js`, `sim.js`, then `enemies.js`, `player.js`, `hud.js`, `game.js`. `sim.step` calls the module function if it exists, otherwise the built-in one (`WL_SIM.builtin.stepEnemies/stepPlayer` stay callable, so a module can wrap them). Modules get `WL_SIM.API` (damage, collide, freeSpot, los, rayWall, wallsNear, fire, spawnEnemy, derived, weaponStats, inventory helpers, seeded rnd) and must stay deterministic: no `Math.random`, no DOM in `enemies.js`/`player.js`, state only in `s`.
-Shared files (`config.js`, `sim.js`, `game.js`) are edited by one thread at a time: send the builder the exact change instead of editing in parallel. New data goes in new keys, existing keys are not renamed.
+Open `index.html` in a browser. There is no build step and no dependency. For local development with the test and profiling scripts, serve the folder, for example `python3 -m http.server 8765` in the repository root.
+Node.js 22 is used for the headless tests. Platform priority: desktop browser first, phone later.
 
-## City
-`sim.genCity` rasterises buildings and water into 1 m rows of collision rectangles; buildings are drawn as prisms (height in metres x `CITY.vk` px), with facades by floor, glazed loggias, roofs with snow. Zones (park, microdistrict, private sector, garages and railway, embankment) set where enemies spawn and are shown on the HUD. Loot: entrances, garages, cars, bins, crates.
+## The game in one page
 
-## Loop
-Base (separate location) -> raid in the city -> find the checkpoint pass -> hold E at the bridge checkpoint, or leave through an opened metro entrance (hold E 15 s). Death: only what the player carried into the raid is lost; the base stash is permanent, level and stats stay. Save in localStorage.
+- **Setting.** Ukrainian city, 2003, after a catastrophe in 1996. Panel blocks and the real look of the early 2000s, neon only as rare accents. External exits are sealed; checkpoints inside the city belong to the Administration. The map is about 2918 x 1946 m with 16 districts, 7 bridges, about 1837 buildings and about 7.7k containers.
+- **Loop.** Shelter (a separate small location with a stash, a shop and a character terminal) -> pick a gang -> raid -> loot -> leave through an evacuation point, or die.
+- **Raid start.** Every raid starts at 00:00, at night, with all gangs on the street.
+- **Death.** You lose only what you carried into the raid. The shelter stash is permanent. Level and stats stay.
+- **Gangs.** Before each raid you choose one of 8 gangs or "no gang". The choice sets your spawn district, outfit, starter kit and who is hostile (see [Hostility](#hostility)).
+- **Day and night.** Day is 10:00-16:00, the rest is night (with dusk and dawn blending). By day civilians walk the streets; in the evening and at night they go home, and mobs have homes too. Dogs have no home and are only out at night. Night is much denser than day and is meant to be dangerous from level 1.
+- **Combat.** Firearms first (pistol, shotgun, rifle), melee with the butt (V). Friendly fire is on. Doors and windows break under fire and make noise. Light comes from street lamps; the player sees in a 120-degree cone, mobs see 16 m.
+- **Vehicles.** Physical cars built from primitives: drive, shoot, explode, break in, loot, fuel. Controls are relative to the car's nose.
+- **Buildings.** Houses and blocks have procedural interiors (first floor only in this build), doors, locks, loot. Locked doors and garage gates can be forced by holding E (noisy).
+- **Progression.** Stats (strength, agility, perception, endurance) and skills (shooting, scavenging, medicine); points are spent only in the safe zone. Weapon skill grows from use.
 
-## Controls
-WASD move, mouse aim (line + cross only), LMB fire, Shift sprint, R reload, 1-3 or wheel weapons, 4 quick heal, E search/interact, V melee, Q adrenaline, Tab inventory, C character. Touch: two sticks.
+### Controls
 
-## Not done yet
-Neighbouring districts, tokens (metro currency) as items, interiors, vehicles, street names.
+W A S D move (screen-relative on foot) | LMB fire | RMB hold to look further | R reload | 1 2 3 weapons | E search, interact, hold to force a locked door or gate | V butt strike | Shift sprint | Q adrenaline | Tab inventory | C character | M city map | H help | Esc close panels. Touch controls exist as two sticks.
+Car: W throttle, S brake then reverse, A/D steer relative to the car's nose, F enter/leave.
 
-## Neighbour districts and object scale
-- `districts2.js` (generated by `tools/gen_districts.py`) adds Saltivka, Traktorny and Ilyinka in the same metre frame; `mergeLevel` in `sim.js` shifts everything by (450, 250) m. Buildings of the new districts are generated; large features are traced from `assets/city-map.png`.
-- Object scale: `CITY.objScale` (1.6) enlarges building footprints relative to the player (radius 12 px); overlapping buildings and buildings on roads are dropped. Cars are 10 x 4.6 m. The map size stays the same.
+### Hostility
 
-## Interiors
-Warehouses and industrial halls are enterable: ring walls with a door gap facing the road, racks/crates/loot inside tagged `inb` (hidden until the player is inside). From outside walls and roofs are opaque; inside, the roof fades and a line-of-sight fog (rays vs walls, `drawFog` in game.js) hides everything the character cannot see.
+- Your own gang does not attack you. Four hits on your own people turn the whole gang against you.
+- "No gang": everyone is hostile.
+- Administration police and Trade Coalition guards stay neutral until order is broken (weapon raised, shooting in their district, attacking them or civilians). Then they act, and a wanted state lasts 600 game seconds.
+- Dogs are hostile to everyone. Civilians are neutral.
+- **Gang relations are deliberately primitive (owner decision, 27 Nov 2026):** members of one gang do not attack each other, and the owners of a district defend it against raiders of other gangs. There is no territory capture and no influence system, and none is being developed now. `behavior/extras.js` still contains gang-versus-gang fights from earlier work; do not extend them.
 
-## Map fidelity rule
-The world must replicate `assets/city-map.png`. After any geometry change run `tools/overlay_check.py` (draws water, districts, parks, roads, bridges, rails over the map) and compare. Last check: rivers (north of Pavlov Yar and south at Ilyinka), the Saltivka forest band, Ilyinka outline and bridges follow the image; Saltivka and Traktorny borders are still approximate; block shapes inside districts are generated, not traced.
+## Repository map
 
-Buildings of Saltivka, Traktorny and Ilyinka: `tools/gen_districts.py` extracts dark cells between the light street lines of the map image (OpenCV) and turns each cell into a building footprint (minimum-area rectangle); cells the image does not resolve (low contrast, mostly east Saltivka) are filled by the old generator. Map extent is back to 1000 x 880 m (south of Ilyinka is clipped at map y 565).
+| Path | What it is |
+|---|---|
+| `index.html` | Page, screens, help text. Loads the scripts in a fixed order (below). |
+| `config.js` | Game data: weapons, items, loot tables, stats, save key, world scale. |
+| `world15.js`, `road_network.js/.json` | Generated city data (roads, water, parks, districts, buildings footprints, bridges). Generated from the owner's map; do not hand-edit. |
+| `sim.js` | Deterministic simulation: world generation, physics, bullets, doors, cars, containers. No DOM. |
+| `nav.js` | Navigation grid and A* for mobs. |
+| `enemies.js`, `behavior/factions.js`, `behavior/extras.js` | Mob and NPC behaviour (scripted state machines, not neural networks), faction matrix, spawn tables, night pressure, extras (tripwires, shields, smoke, door locks, gang fights). |
+| `player.js`, `hud.js`, `feel.js`, `threat.js` | Player step, HUD, game feel, threat indicators. |
+| `game.js` | Client: input, rendering, camera, audio, screens, save wiring, URL parameters. |
+| `modules/save.js` | Versioned save format, migrations, backups (`WL_SAVE`). |
+| `modules/dom.js` | Escaping HTML templates (`WL_DOM`). The only allowed way to put data into the DOM. |
+| `modules/interiors_sim.js`, `modules/interiors.js` | Building interiors, doors, locks, forced entry (simulation and drawing). |
+| `modules/vehicles-phys.js`, `vehicles-draw.js`, `vehicle-view.js` | Cars. |
+| `modules/bridges.js`, `bridges-data.js` | Bridge geometry and drawing. |
+| `modules/characters.js`, `graffiti.js`, `vision.js`, `start.js`, `map.js`, `shop.js` | Procedural character rig, wall writing, field of view, gang/start screen, full-screen city map, shop. |
+| `assets/` | Textures (`*.png`, tiles and facades) and local fonts (`fonts/`, with licence texts). |
+| `tests/` | Headless tests and profiling scripts (see [Tests](#tests)). |
+| `docs/` | `BLOCK96_DEVELOPMENT_PLAN.md` (roadmap v74-v80 and Visual V2), `handoff/` (context, audit, profiling, visual style). |
+| `CHANGES_V*.md` | What changed in each release. Newest first in practice: v79. |
 
-## Proportions
-Reference: the player (hit circle r 12 px) is ~0.9 m of effective width, so about 26 px per metre horizontally. Buildings are scaled by `CITY.objScale` 2.2, cars 10 x 4.6 m (100 x 46 px), floors 2.8 m x `CITY.vk` 8 px/m (about one player height per floor), poles x1.7, lamps x1.7, trees x1.8, doors 52 px (2 player widths). Map extent unchanged.
+Script order (as in `index.html`): `config`, `dom`, `vehicles-phys`, `vehicles-draw`, `world15`, `road_network`, `bridges-data`, `bridges`, `nav`, `interiors_sim`, `sim`, `behavior/factions`, `enemies`, `player`, `hud`, `feel`, `threat`, `vision`, `behavior/extras`, `vehicle-view`, `characters`, `graffiti`, `interiors`, `start`, `map`, `shop`, `save`, `game`.
+`modules/vision.js`, `behavior/extras.js` and the other optional modules attach to `window` objects (`WL_*`); `sim.step` uses a module's function when it exists and the built-in one otherwise.
 
-## v61 (2026-11-25)
-- Raid starts at 00:00. Before each raid a gang screen (8 gangs + "no gang") sets spawn district, outfit, kit and who is hostile (`modules/start.js`, `s.playerFac`, `enemies.js stanceOf`).
-- ППС and the Trade Coalition act only on order violations (weapon raised after a warning, shot in their district, attack on them or on civilians).
-- Car controls are relative to the car: W throttle, S brake then reverse, A/D steer (`modules/vehicles-phys.js drive`).
-- Texture guide for other networks: `TEXTURES.md`. Tests: `B96_ROOT=. node tests/gangs.test.js`, `tests/behavior.test.js`.
+### Architecture rules
 
-## v63
-- behavior/extras.js: gang vs gang fights, Kooperativ tripwires, Brigada shield, smoke, petards, molotov, door locks (30% of residential doors from 15:30 to 10:00), broken-door noise. Aviastroika civilians 17%.
+- The simulation (`sim.js`, `enemies.js`, `player.js`, `behavior/*`) is deterministic: seeded random only, no `Math.random`, no DOM, all state in the world object `s`. Commands go in, events come out.
+- Rendering is a 2D isometric 3/4 projection on canvas (not three.js). The camera shows about 28 m. Do not change the projection, camera or coordinates without an explicit task.
+- Scale anchor: the character is 1.8 m and everything uses real proportions. 10 world px = 1 m.
+- Shared files (`config.js`, `sim.js`, `game.js`) are edited by one person or thread at a time. New data goes in new keys; existing keys are not renamed.
+- Unit of work is one small, verifiable change with tests. Do not weaken a test to make it pass.
 
-## v62
-- Dense night: night table x1.5 from level 1 (no home discount), patrols spawn 55-110 m from the player out of sight and head to them (`nightPressure` in `enemies.js`), cap 760 mobs. City map on M (`modules/map.js`). Wording cleanup: Ukrainian city, panel blocks, 2000s look.
+## Saves
 
-## Saves (v76)
-`modules/save.js` (`WL_SAVE`) owns the save format. The localStorage key stays `wastland.save.v1` (historical name, do not change).
-- Current format is `v: 2` (adds `meta: {rev, savedAt}`). Migrations are step-by-step (`MIGRATIONS[n]` turns vN into vN+1); a v1 save loads, is normalised and is written back as v2 on the next save.
-- Normalisation drops unknown item/weapon ids and clamps numbers; the untouched original text is kept under `<key>.premigrate`.
-- Every write first moves the previous valid save to `<key>.bak`, then reads the value back to verify it.
-- An unreadable save is copied to `<key>.corrupt` and the `.bak` is tried; a save written by a newer build switches writing off (never overwritten).
-- Storage failures (quota, private mode, verify mismatch) show an in-game toast instead of being swallowed.
-- Rule kept: the stash survives death and evacuation (`WL_SAVE.applyRaid`, covered by `tests/save-dom.test.js`).
-- Downgrading to a build older than v76 makes it treat a v2 save as unreadable; use the `.bak` key in that case.
+`modules/save.js` owns the format. The localStorage key stays `wastland.save.v1` (a historical name; changing it would wipe players' saves).
+- Current format is `v: 2`. Migrations are step by step (`MIGRATIONS[n]` turns vN into vN+1). A v1 save loads, is normalised and is written as v2 on the next save.
+- Unknown item and weapon ids are dropped; the untouched original is kept under `<key>.premigrate`.
+- Every write first copies the previous valid save to `<key>.bak`, then reads the value back to verify it.
+- An unreadable save is copied to `<key>.corrupt` and the `.bak` is tried. A save written by a newer build switches writing off.
+- Storage failures show an in-game message instead of being swallowed.
+- The stash survives death and evacuation (`WL_SAVE.applyRaid`, covered by `tests/save-dom.test.js`).
 
-## Safe DOM (v76)
-Data never reaches `innerHTML` as a plain string. Use `WL_DOM` (`modules/dom.js`): `html` tagged templates escape every interpolated value, `setHtml(el, fragment)` is the only writer, `h(tag, attrs, ...kids)` builds elements. `tests/save-dom.test.js` fails on any other `innerHTML`/`outerHTML`/`insertAdjacentHTML`/`document.write` and on any `http(s)` URL in `index.html`.
+## Safe DOM and privacy
 
-## Fonts and privacy (v76)
-Chakra Petch (500/600/700, Latin) and JetBrains Mono (500/700, Latin + Cyrillic) are self-hosted in `assets/fonts/` (SIL OFL 1.1, licence texts next to the files). The page makes no third-party requests, so no visitor IP leaves the origin. Chakra Petch has no Cyrillic glyphs; Cyrillic text in the display face falls back to the system UI font (same as before).
+- Data never reaches `innerHTML` as a plain string. Use `WL_DOM`: `html` tagged templates escape every value, `setHtml(el, fragment)` is the only writer, `h(tag, attrs, ...kids)` builds elements. `tests/save-dom.test.js` fails on any other `innerHTML`, `outerHTML`, `insertAdjacentHTML`, `document.write` and on any `http(s)` URL in `index.html`.
+- Fonts are self-hosted (`assets/fonts/`, SIL OFL 1.1). The page makes no third-party requests, so no visitor IP leaves the origin. Do not add external fonts, CDNs, analytics or trackers.
 
-## Control-scene URL parameters (v76)
-`?seed=N` fixes the world seed (also fixes the snow flurries), `?at=x,y` places the player at that point in metres at raid start (the caller must choose a free spot), `?hour=H` was already supported. Without parameters nothing changes.
+## URL parameters (for control scenes and tests)
 
-## Baseline (v76, measured)
-Environment: cloud container, 4 vCPU Xeon 2.1 GHz, 16 GB RAM, Node 22.23.5, headless Chromium 158 with software rendering (SwiftShader, no GPU). **These are not mobile or GPU numbers.** Nothing here measures a real phone.
-
-| Metric | Result | How |
-|---|---|---|
-| World generation (`newWorld`, 3 seeds x 2 rounds) | 1.7-2.5 s | `node --expose-gc tests/profile-boot.js` |
-| First simulation tick after world | 0.43-0.48 s | same |
-| Map size | 1837 buildings, ~503k wall segments, ~7.7k containers | same |
-| Dense night sim, level 8 (extras test) | ~3.3 ms/tick (budget 6) | `node tests/extras.test.js` |
-| Browser boot to first frame | 1.2 s | `node tests/profile-browser.js` (needs `python3 -m http.server 8765` in the repo root; `B96_CHROMIUM` selects a browser binary) |
-| Browser frame interval, seed 31337, ~224 frames | P50 33.3 ms, P95 50 ms, P99 50.1 ms | same (software canvas, so not representative) |
-| JS heap after boot | 142 MiB used / 204 MiB total | same |
-| Console errors during the run | 0 | same |
-
-Release targets in `docs/BLOCK96_DEVELOPMENT_PLAN.md` (30 FPS weak device, 60 FPS fast device) are goals, not results. Real-device P50/P95/P99 are still unmeasured (plan item v75.1).
+`?seed=N` fixes the world seed (and the snow flurries), `?at=x,y` places the player at that point (metres) at raid start (choose a free spot), `?hour=H` sets the start hour. Without parameters nothing changes.
 
 ## Tests
-`node tests/behavior.test.js`, `node tests/extras.test.js`, `node tests/gangs.test.js`, `node tests/save-dom.test.js`, `node tests/passability.test.js` (~1.5 min), `node tests/districts-nav.test.js`, `node tests/stall.test.js` (~1.5 min), `node tests/perception.test.js`. Known failing check: gangs "vyshka: night, hostile armed within 100 m >= 12 (got 11)", a consequence of the 3-member group limit; the test expectation has not been changed.
 
-## Passability (v77)
-`node tests/passability.test.js` (about 1.5 min; `REPORT=file.json` writes details). Fixture: harness default seed 12345, hour 12.
-- Bridges: all 7 are passable on foot and by sedan and truck in both directions. `sim.js` `bridgeCarve` removes the water mask under every deck (deck width + 1 cell each side, ends extended by 24 m); M5 was not carved over most of its length and M7 ended in water.
-- Entrance doors are 1.2 m wide (`ENTRY_W` in `modules/interiors_sim.js`, was 1.0 m). Tight doors: 634 -> 0.
-- A house door now picks the nearest road-side face whose front strip is not an already placed neighbour's wall (`frontClear`). Not passable 22 -> 7, blocked in front 7 -> 7, no street route 47 -> 33.
-- The remaining 41 doors are listed in `tests/passability-exceptions.json` with a category. The test fails on any new failure and on any exception that no longer fails. Most are houses in the roadless area east of the river (nearest road sample is on the M6 deck, 40-145 m away); the rest stand within 1 m of a neighbour's wall.
-- Test changes (not weakened): the on-foot walk time limit scales with deck length (M5 is 343 m, the old fixed 60 s could not finish at walking speed), car time limit likewise, and the car start uses the nearest free approach point (a house stands 22 m before M7's south end).
-- 245 garage rows have no entry door; whether that is intended is not confirmed.
+Run from the repository root with Node.js. `B96_ROOT=<path>` loads a different checkout.
+
+| Command | Checks | Last result (v79) |
+|---|---|---|
+| `node tests/behavior.test.js` | Behaviour rules, schedules, factions | 63/63 |
+| `node tests/extras.test.js` | Extras, dense-night tick budget | 22/22 |
+| `node tests/gangs.test.js` | Gang start, hostility, night density | 141/142 |
+| `node tests/save-dom.test.js` | Save layer, DOM safety, no external URLs | 37/37 |
+| `node tests/perception.test.js` | Hearing, vision, sleeping mobs | 11/11 |
+| `node tests/pry.test.js` | Forced entry of doors and gates | 13/13 |
+| `node tests/districts-nav.test.js` | Routes between the 16 districts | 10/10 |
+| `node tests/passability.test.js` (about 1.5 min) | 7 bridges, doors, routes; exception list in `tests/passability-exceptions.json` | 47/47 |
+| `node tests/stall.test.js` (about 1.5 min) | Agents that stop making progress | informational |
+
+Known failing check: gangs "vyshka: night, hostile armed within 100 m >= 12 (got 10)". It is a consequence of the 3-member group limit; the expectation has not been changed on purpose. Do not "fix" it by raising group sizes.
+Profiling: `node --expose-gc tests/profile-boot.js`, and `node tests/profile-browser.js` with a local server (`B96_CHROMIUM` selects a browser binary).
+
+## Measured baseline (software rendering, not a phone)
+
+Cloud container, 4 vCPU, Node 22, headless Chromium with software canvas. These numbers do **not** describe a phone or a GPU.
+World generation 1.7-2.5 s; first tick 0.43-0.48 s; dense night simulation about 3.3 ms per tick (budget 6 ms); browser boot to first frame 1.2 s; frame interval P50 33 ms, P95 50 ms (software canvas); JS heap about 142 MiB; 0 console errors. Release targets (30 FPS on a weak device, 60 on a fast one) are goals. **Real-device FPS has not been measured.**
+
+## Navigation and entrances (v77)
+
+All 7 bridges are passable on foot and by sedan and truck in both directions (`sim.js` `bridgeCarve` clears the water mask under every deck). Entrance doors are 1.2 m wide (`ENTRY_W`). 41 entrances that still fail are listed with a category in `tests/passability-exceptions.json` (mostly houses in the roadless area east of the river); the test fails on any new failure and on any listed exception that starts passing. Details: `CHANGES_V77.md`, `CHANGES_V78.md`.
 
 ## Garages and forced entry (v79)
-Garage rows were never doorless: each box has its own roll gate (1025 gates, about 27% locked, about 35% open at start). The earlier "245 rows without an entry door" was the test not counting gates as entries; `tests/passability.test.js` now checks gates too (9 gates documented as exceptions).
-Locked exterior doors and gates can be forced: hold E next to them, 3 s for a door and 6 s for a gate (`WL_HOUSES_SIM.pryTick`). It makes noise every second (heard like a kicked-in door, 45 m) and is cancelled by releasing E or walking away. Shooting the lock still works. `tests/pry.test.js`.
+
+Every garage box has its own roll gate (1025 gates, about 27% locked). Locked exterior doors and gates can be forced: hold E next to them, 3 s for a door and 6 s for a gate (`WL_HOUSES_SIM.pryTick`). It makes noise every second (heard like a kicked-in door, 45 m) and is cancelled by releasing E or walking away. Shooting the lock still works.
+
+## Not done yet (do not assume these exist)
+
+- Upper floors, stairs and layers above and below ground inside buildings: only the first floor is playable (plan v77.3).
+- Visual V2 (new materials, lighting, facades). Another contributor is doing it; a rejected draft is not merged. The control scenes and the licence register are in PR #10.
+- Co-op (planned later, host is the player's PC) and phone support (planned after desktop).
+- Territory capture and gang-to-gang diplomacy (not planned now, see Hostility).
+- Level-of-detail for far mobs beyond the existing sleep radius (plan v79.2-v79.5).
+- UI text is not localised to Ukrainian yet; whether and when to do it is an owner decision.
+- Real-device performance and thermal checks.
+
+## Project rules (mandatory)
+
+These come from the owner. If a task seems to conflict with one, stop and ask instead of working around it. When two sources disagree, the owner's explicit rule wins over older text and PDFs.
+
+1. **Language of the repository.** Everything in GitHub (code comments, docs, commit messages, PRs, issues) is in English or Ukrainian only.
+2. **The setting is Ukrainian.** Never use any reference to Russia or Russian culture, and never use the labels "Soviet" or "post-Soviet" (in any language), anywhere: code, text, prompts, docs, commit messages. Describe the look with "panel blocks" and "early-2000s aesthetics". The year is 2003, so no anachronisms after 2003.
+3. **Stash is permanent.** The shelter stash is kept after death and after evacuation. Only what the player carried into the raid can be lost.
+4. **Group size.** A raid group (squad, street gang, night patrol) has at most 3 members.
+5. **Buildings.** No building is taller than 5 floors; there are no 16-storey blocks. Buildings keep 5.2 m from the asphalt edge and never stand on a road or pavement.
+6. **Map.** The owner's drawn map (export of the map editor, 2918 x 1946 m, 16 districts) is the basis of the city. Do not redraw districts, roads, scale or city size. Generated data files are not edited by hand. Map changes made in the game must be mirrored back to the owner's editor data, and drawn features are never overwritten.
+7. **Do not change without an explicit task:** balance, factions, economy, population counts, camera and projection, controls, the game concept, the engine, existing assets, the save format (only compatible migrations).
+8. **Do not trade quality for speed.** Do not cut population, territory, features or visibility to make the game faster. Optimise only with before and after measurements on the same seed, scenario and device (P50/P95/P99), and report measured results, not guesses. Node timings are not phone FPS.
+9. **Determinism and safety.** No `Math.random` or DOM in the simulation; no raw `innerHTML`; no external network requests from the page; no new third-party assets without a licence entry (see PR #10 register).
+10. **Gang relations stay primitive** (see Hostility). No territory capture or influence system.
+11. **Process.** Branch from the latest `main`; never push to `main`; open a pull request. Do not overwrite the owner's own commits (the owner also works through Codex). Do not publish a release, deploy to Vercel or push without the owner's permission. Run the relevant tests, report PASS, FAIL, SKIP and what was not run, and never claim success without a measurement. Stop at a checkpoint and wait for the owner's go-ahead before the next stage.
+12. **Honesty.** Mark unverified statements as unverified. Do not describe planned features as implemented.
+
+## Documents
+
+- `docs/BLOCK96_DEVELOPMENT_PLAN.md` - roadmap v74-v80 and Visual V2.
+- `docs/handoff/` - project context (`BLOCK96_CONTEXT.md`), audit of v73, optimisation and profiling notes, visual style, sources.
+- `CHANGES_V69.md` ... `CHANGES_V79.md`, `LIGHTING_*`, `MATERIALS_V68.md`, `TERRAIN_V62_NOTES.md`, `OPTIMIZATION_V65.md` - history and design notes per release.
+- `TEXTURES.md` - texture guide for other generation tools (no text inside textures; match the mean colours listed there).
+- `tests/README.md` - how to run the tests.
+
+## Licence
+
+All rights reserved by the owner. No open-source licence is granted. Textures and the props sheet were generated by the owner with an image generator; the terms are recorded as owner-stated in the asset register (PR #10).
