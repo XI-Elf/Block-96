@@ -1,29 +1,31 @@
-# Дорожная карта Block-96: v74–v80
+# Block-96 Roadmap: v74–v80
 
-Предлагаемый порядок, не календарный график. Номер версии может меняться по решению владельца. Первая версия исправляет подтверждённые дефекты и создаёт основу проверки. Последующие версии допускаются только после контрольной точки предыдущей. P0 — блокирует безопасную разработку/сохранение; P1 — важная стабильность; P2 — улучшение; P3 — эксперимент.
+> **Status after release v75:** v75 is shipped and releases continue from v76. The harness fix and the PPS test selector (plan items v74.3 and v74.4) are done; v75.1 is partly done. See `docs/BLOCK96_DEVELOPMENT_PLAN.md` for the item-level checklist.
 
-| Версия | Приоритет | Объём | Приёмка / контроль |
+A proposed order, not a calendar. The version number may change at the owner's decision. The first version fixes confirmed defects and creates a basis for verification. Later versions are allowed only after the checkpoint of the previous one. P0 — blocks safe development/saving; P1 — important stability; P2 — improvement; P3 — experiment.
+
+| Version | Priority | Scope | Acceptance / control |
 |---|---|---|---|
-| v74 | P0/P1 | Базовая линия, portable harness, PPS-тест, сохранения, проверка карты, диагностический профиль, актуальная документация | Воспроизводимые результаты, сохранение склада, отчёт PASS/FAIL/SKIP, baseline устройства или честный блокер |
-| v75 | P1 | Профилирование и низкорисковая оптимизация геометрии/памяти, Canvas fog и DPR при доказанной пользе | Сравнение одинаковых сценариев; неизменные коллизии и видимость; отсутствие регрессий |
-| v76 | P1/P2 | Визуальный прототип одного квартала | Владелец утверждает внешний вид; мобильный тест дня/ночи; не меняется камера |
-| v77 | P1 | Исправление обнаруженных проблем входов/мостов; локальная и глобальная навигация при необходимости | 7 мостов в обе стороны для предусмотренных типов движения; доступные входы или явные исключения |
-| v78 | P2 | Масштабирование утверждённых материалов, света, интерьеров, растительности и эффектов | Стабильность нескольких районов; память, FPS, тесты; ассеты имеют подтверждённые права |
-| v79 | P2/P3 | Multi-rate AI/LOD только если профиль показывает необходимость | Непрерывность состояния NPC, фракций, боя, поиска и маршрутов; доказанный выигрыш |
-| v80 | P2/P3 | Чанковая подгрузка и lazy interiors при подтверждённой необходимости | Детерминизм мира, сохранение лута, отсутствие коллизий/пропаданий на границах, уменьшение boot/heap |
+| v74 | P0/P1 | Baseline, portable harness, PPS test, saves, map checks, diagnostic profile, up-to-date documentation | Reproducible results, stash preserved, a PASS/FAIL/SKIP report, a device baseline or an honest blocker |
+| v75 | P1 | Profiling and low-risk geometry/memory optimization, Canvas fog and DPR where a benefit is proven | Comparison on identical scenarios; collisions and visibility unchanged; no regressions |
+| v76 | P1/P2 | Visual prototype of one quarter | The owner approves the look; mobile day/night test; the camera does not change |
+| v77 | P1 | Fix discovered entrance/bridge problems; local and global navigation if needed | 7 bridges in both directions for the intended movement types; accessible entrances or explicit exceptions |
+| v78 | P2 | Scale the approved materials, light, interiors, vegetation, and effects | Stability across several districts; memory, FPS, tests; assets have confirmed rights |
+| v79 | P2/P3 | Multi-rate AI/LOD only if the profile shows a need | Continuity of NPC, faction, combat, search, and route state; a proven gain |
+| v80 | P2/P3 | Chunked streaming and lazy interiors if a need is confirmed | World determinism, loot preserved, no collisions/disappearances at borders, lower boot/heap |
 
-## Порядок оптимизаций
-1. Измерить baseline: симуляция, рендеринг, длительность кадров, boot, heap/GC, плотность NPC; несколько seed, холодный/тёплый старт. Реальные Android/iOS по доступности.
-2. Геометрия: сначала измерить и объединить только совместимые статические сегменты; затем компактное хранение и chunk indexing. Сохранить исходный collision corpus и сравнивать выходы wallsNear/rayWall/freeSpot. Не объединять через двери/окна; учитывать материалы, флаги, этажи и ID.
-3. Графика: половинное разрешение визуального fog как A/B (площадь буфера 25%, не гарантированное ускорение кадра); сохранить точную видимость. Ограничить DPR, кешировать статические слои; кеши с бюджетом и инвалидацией. OffscreenCanvas/Worker — только после замера и проверки совместимости.
-4. Навигация: проверять габариты агента, препятствия, мостовые соединения, доступность входов. Ограничивать планировщик за кадр при необходимости; отслеживать прогресс пути, не телепортировать NPC для маскировки ошибок.
-5. AI: отдельное восприятие, память последнего контакта, решения, маршрутизация и координация. Сначала не менять работающий автомат. LOD повышать при бою, видимости и релевантных событиях; избегать осцилляций между уровнями. Результат измерить.
-6. Сохранения: parse/normalize/migrate, резервные копии и явные ошибки записи. Сначала текущий формат и обратимость. IndexedDB/транзакции для растущих данных — отдельная задача, не требование немедленной миграции.
+## Optimization order
+1. Measure the baseline: simulation, rendering, frame durations, boot, heap/GC, NPC density; several seeds, cold/warm start. Real Android/iOS where available.
+2. Geometry: first measure and merge only compatible static segments; then compact storage and chunk indexing. Keep the original collision corpus and compare the outputs of wallsNear/rayWall/freeSpot. Do not merge across doors/windows; account for materials, flags, floors, and IDs.
+3. Graphics: half-resolution visual fog as an A/B test (25% of the buffer area, not a guaranteed frame speed-up); keep exact visibility. Limit DPR, cache static layers; caches with a budget and invalidation. OffscreenCanvas/Worker only after measurement and a compatibility check.
+4. Navigation: check agent dimensions, obstacles, bridge connections, and entrance accessibility. Limit the planner per frame if needed; track path progress, do not teleport NPCs to mask errors.
+5. AI: separate perception, last-contact memory, decisions, routing, and coordination. Do not change the working state machine at first. Raise LOD during combat, visibility, and relevant events; avoid oscillation between levels. Measure the result.
+6. Saves: parse/normalize/migrate, backups, and explicit write errors. First the current format and reversibility. IndexedDB/transactions for growing data is a separate task, not a requirement for immediate migration.
 
-## Критерии релиза
-- Синтаксис и обязательные автоматические проверки прошли; незапущенные/timeout не считаются PASS.
-- Рейд, смерть, эвакуация, склад и загрузка старого сохранения проверены. Предметы не исчезают/дублируются.
-- Мосты, входы, транспорт, ночная видимость и боевые сценарии проверены согласно объёму релиза.
-- Реальные замеры на целевом устройстве: P95 кадра до 16,7 мс для выбранного 60 FPS режима или до 33,3 мс для 30 FPS. Это цели, не заявленные результаты. Протоколировать P99/долгие кадры и нагрев.
-- Не уменьшены город и население без разрешения; камера и стиль не изменены без согласования.
-- Есть changelog, отчёт, точка отката, перечень ограничений и ручных проверок. Владелец утверждает релиз.
+## Release criteria
+- Syntax and the mandatory automated checks passed; checks that were not run or timed out do not count as PASS.
+- Raid, death, evacuation, stash, and loading of an old save are verified. Items do not vanish or duplicate.
+- Bridges, entrances, vehicles, night visibility, and combat scenarios are verified according to the release scope.
+- Real measurements on the target device: P95 frame time up to 16.7 ms for the chosen 60 FPS mode or up to 33.3 ms for 30 FPS. These are targets, not stated results. Log P99/long frames and heating.
+- The city and population have not been reduced without permission; the camera and style have not been changed without agreement.
+- There is a changelog, a report, a rollback point, a list of limitations, and manual checks. The owner approves the release.
