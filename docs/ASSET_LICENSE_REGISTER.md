@@ -3,7 +3,7 @@
 Scope: every non-code asset and third-party dependency in `block96-js-v75.zip`, as audited on 2026-11-27.
 Status legend: **VERIFIED** (checked in the build or repository), **OWNER-STATED** (origin and permission given by the owner in chat, no document), **UNVERIFIED** (provenance not recorded anywhere in the repository; the owner must confirm), **N/A**.
 
-> Open finding: the repository has **no LICENSE file**. All 16 remaining PNG files are OWNER-STATED (ChatGPT, commercial use permitted) but there is no saved copy of the terms; record the plan name and date to make this verifiable.
+> Repository license (owner decision, 2026-11-27): **All rights reserved**, no open-source license; see `LICENSE`. All 16 remaining PNG files are OWNER-STATED (ChatGPT, commercial use permitted) but there is no saved copy of the terms; record the plan name and date to make this verifiable.
 
 ## 1. Raster assets (`assets/`)
 
@@ -75,7 +75,6 @@ S.T.A.L.K.E.R. and Project Zomboid are mood and technique references only. No te
 
 ## 8. Open questions for the owner
 
-1. Which license should the repository itself carry? (still open; without one it is "all rights reserved" by default)
-2. Optional: keep a note of the ChatGPT plan and date used for the texture batches.
+None blocking. Optional: keep a note of the ChatGPT plan and date used for the texture batches.
 
-Resolved on 2026-11-27: `props.png` is from ChatGPT; `cars.png` removed; textures made with ChatGPT, commercial use permitted (owner statement); fonts must be bundled, not fetched.
+Resolved on 2026-11-27: `props.png` is from ChatGPT; `cars.png` removed; textures made with ChatGPT, commercial use permitted (owner statement); fonts must be bundled, not fetched; repository license is "All rights reserved".
