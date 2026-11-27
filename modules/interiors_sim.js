@@ -54,6 +54,7 @@
   }
 
   // ---------- layout builder ----------
+  const ENTRY_W = 1.2; // v77: entry doorway width in metres (was 1.0): rotated houses rasterise jambs in 5 px squares and left a 7-8 px gap for a 7 px player
   function newLayout(spec) { return { id: spec.id, kind: spec.kind, w: spec.w, d: spec.d, T: wallT(spec.kind), rooms: [], walls: [], doors: [], wins: [], furn: [], entry: null, nid: 1 }; }
   const nid = (L, p) => p + (L.nid++);
   function addWall(L, run, pos, a0, a1, th, ext, face) { const w = { id: nid(L, 'w'), run, pos: r2(pos), a0: r2(a0), a1: r2(a1), th, ext: !!ext, face: face == null ? -1 : face, ops: [] }; L.walls.push(w); return w; }
@@ -199,10 +200,10 @@
         const ur = { x0: k > 0 ? x0 + 0.1 : x0, y0: R.y0, x1: k < n - 1 ? x1 - 0.1 : x1, y1: R.y1 };
         const ext = [true, k === n - 1, true, k === 0], horiz = face === 0 || face === 2;
         const ef = horiz ? face : (face === 3 && k === 0) || (face === 1 && k === n - 1) ? face : 2;
-        const u = unit(L, ur, rnd, { min: 2.5, maxA: 26, ext, extWalls: ew, entry: { wall: ew[ef], face: ef, wd: 1.0 }, flat: false, single: 'studio' });
+        const u = unit(L, ur, rnd, { min: 2.5, maxA: 26, ext, extWalls: ew, entry: { wall: ew[ef], face: ef, wd: ENTRY_W }, flat: false, single: 'studio' });
         if (u.hall && !L.entry) L.entry = L.doors.find(dd => dd.entry);
       }
-    } else unit(L, R, rnd, { min: 2.5, maxA: w * d > 90 ? 30 : 24, ext: [true, true, true, true], extWalls: ew, entry: { wall: ew[face], face, wd: 1.0 }, flat: false, single: 'studio' });
+    } else unit(L, R, rnd, { min: 2.5, maxA: w * d > 90 ? 30 : 24, ext: [true, true, true, true], extWalls: ew, entry: { wall: ew[face], face, wd: ENTRY_W }, flat: false, single: 'studio' });
     return { R };
   }
   // ---------- многоквартирный дом: секции вдоль фасада, в каждой подъезд с лестницей и квартиры вокруг площадки ----------
@@ -217,7 +218,7 @@
     const doorAtV = (wl, v0, v1) => addDoor(L, wl, (Y(v0) + Y(v1)) / 2, Math.min(1.1, Math.abs(v1 - v0) - 0.2), { open: rnd() < 0.7 ? 1 : 0 });
     const winU = (wl, u0, u1) => { const span = u1 - u0; if (span >= 1.9) addWin(L, wl, (X(u0) + X(u1)) / 2, Math.min(1.5, span - 0.8)); };
     const winSide = (v0, v1) => { if (sideW && v1 - v0 >= 1.9) addWin(L, sideW, (Y(v0) + Y(v1)) / 2, 1.2); };
-    const entrance = (v) => addDoor(L, coreWall, Y(v), 1.0, { open: rnd() < 0.5 ? 1 : 0 });
+    const entrance = (v) => addDoor(L, coreWall, Y(v), ENTRY_W, { open: rnd() < 0.5 ? 1 : 0 });
     if (FW < 3) { entrance(D / 2); room('studio', 0, FW, 0, D); winU(frontW, 0, FW); winU(backW, 0, FW); return; }
     if (D >= 7.4 && FW >= 4.2) { // спереди кухня и комната, посередине коридор и санузел, сзади зал и спальни
       const ch = 2.0, a = r2(Math.max(2.6, Math.min(6, (D - ch) * 0.46))), b = r2(a + ch), bu = r2(FW - 2.2);
@@ -272,7 +273,7 @@
       box('mailbox', c1 - 0.4, c1 - 0.12, 0.35, 1.55, 1.5, 'entrance', 3);
       if (middle) { // квартира за лестничной площадкой
         const cw_ = addWall(L, 'x', r2(Y(coreD)), c0, c1, 0.2, false);
-        addDoor(L, cw_, cx + 0.6, 1.0, { open: rnd() < 0.5 ? 1 : 0 });
+        addDoor(L, cw_, cx + 0.6, ENTRY_W, { open: rnd() < 0.5 ? 1 : 0 });
         L.rooms.push({ id: nid(L, 'r'), x0: c0 + 0.1, y0: Math.min(Y(coreD + 0.1), Y(D)), x1: c1 - 0.1, y1: Math.max(Y(coreD + 0.1), Y(D)), type: 'studio', area: (cw - 0.2) * (D - coreD) });
       }
       addWin(L, backW, cx, 1.2, { z0: 1.0, z1: 2.2 });
@@ -291,7 +292,7 @@
     const horiz = fc === 0 || fc === 2, ext = ew[fc], span = horiz ? w : d, gw = Math.min(3.6, span * 0.5);
     L.entry = addDoor(L, ext, (rnd() - 0.5) * span * 0.25, gw, { kind: 'gate', entry: true, open: 1, z1: 3.2 });
     const sd = (L.entry.s > 0 ? -1 : 1) * Math.min(span * 0.3, 6) + L.entry.s * 0; // wicket gate on the other side of the face
-    if (span > 14) { const ws = L.entry.s + (L.entry.s > 0 ? -1 : 1) * Math.max(gw / 2 + 2.5, span * 0.2); if (Math.abs(ws) < span / 2 - 1.5) addDoor(L, ext, ws, 1.0, { open: 0, side: true }); }
+    if (span > 14) { const ws = L.entry.s + (L.entry.s > 0 ? -1 : 1) * Math.max(gw / 2 + 2.5, span * 0.2); if (Math.abs(ws) < span / 2 - 1.5) addDoor(L, ext, ws, ENTRY_W, { open: 0, side: true }); }
     // ribbon windows high up on the long walls, not climbable
     for (let f = 0; f < 4; f++) { const wl = ew[f], len = wl.a1 - wl.a0; const n = Math.floor(len / 6); for (let k = 0; k < n; k++) { const s = wl.a0 + (k + 0.5) * len / n; if (L.doors.some(dd => dd.wall === wl.id && Math.abs(dd.s - s) < dd.wd / 2 + 1.6)) continue; addWin(L, wl, s, 2.0, { z0: 3.3, z1: 4.6, high: true }); } }
     // office room in a corner of bigger halls
@@ -331,7 +332,7 @@
     const T = 0.3; L.T = T; const w = L.w, d = L.d, fc = spec.doorFace >= 0 ? spec.doorFace : 2;
     const ew = [addWall(L, 'x', -d / 2 + T / 2, -w / 2, w / 2, T, true, 0), addWall(L, 'y', w / 2 - T / 2, -d / 2 + T, d / 2 - T, T, true, 1), addWall(L, 'x', d / 2 - T / 2, -w / 2, w / 2, T, true, 2), addWall(L, 'y', -w / 2 + T / 2, -d / 2 + T, d / 2 - T, T, true, 3)];
     const R = { x0: -w / 2 + T, y0: -d / 2 + T, x1: w / 2 - T, y1: d / 2 - T };
-    L.entry = addDoor(L, ew[fc], 0, 0.9, { entry: true, open: 0, shed: true }); const room = { id: nid(L, 'r'), x0: R.x0, y0: R.y0, x1: R.x1, y1: R.y1, type: 'store', area: (R.x1 - R.x0) * (R.y1 - R.y0) }; L.rooms.push(room);
+    L.entry = addDoor(L, ew[fc], 0, ENTRY_W, { entry: true, open: 0, shed: true }); const room = { id: nid(L, 'r'), x0: R.x0, y0: R.y0, x1: R.x1, y1: R.y1, type: 'store', area: (R.x1 - R.x0) * (R.y1 - R.y0) }; L.rooms.push(room);
     const wf = fc === 0 || fc === 2 ? ew[fc === 0 ? 2 : 0] : ew[fc === 1 ? 3 : 1]; if (rnd() < 0.5) addWin(L, wf, 0, 0.6, { z0: 1.2, z1: 1.8 });
     return { R };
   }
@@ -453,13 +454,27 @@
     }
     return best;
   }
+  // v79: forced entry. Hold E at a locked exterior door or garage gate: 3 s for a door, 6 s for a gate; every second it makes noise
+  // (kind 'door', heard like a kicked-in door). Moving away or releasing E cancels. Returns the state for the HUD, or null.
+  const PRY = { door: 3, gate: 6, noiseEvery: 1 };
+  function pryTick(s, p, dt, held) {
+    if (!held || p.dead || p.drive != null) { p.pry = null; return null; }
+    const n = near(s, p, 22); if (!n || n.t !== 'door' || !n.o.ext || !n.o.locked || n.o.broke) { p.pry = null; return null; }
+    const D = n.o, need = D.garage ? PRY.gate : PRY.door;
+    if (!p.pry || p.pry.id !== D.id || p.pry.bid !== n.b.id) p.pry = { id: D.id, bid: n.b.id, t: 0, nt: 0, need, x: p.x, y: p.y };
+    const q = p.pry; if (Math.hypot(p.x - q.x, p.y - q.y) > 25) { p.pry = null; return null; }
+    q.t += dt; q.nt += dt;
+    if (q.nt >= PRY.noiseEvery) { q.nt = 0; s.events.push({ t: 'noise', kind: 'door', x: D.x, y: D.y }); }
+    if (q.t >= need) { D.locked = false; setDoor(D, 1); p.pry = null; s.events.push({ t: 'noise', kind: 'door', x: D.x, y: D.y }); return { done: true, door: D, text: D.garage ? 'Ворота взломаны и подняты' : 'Замок взломан' }; }
+    return { t: q.t, need, door: D };
+  }
   // E tap: returns {ok, text, sfx} describing what happened (client shows toast)
   function use(s, p, dmgFn) {
     const n = near(s, p); if (!n) return null;
     if (n.t === 'door') {
       const D = n.o;
       if (D.broke) return { ok: false, text: 'Дверь выбита', sfx: 0 };
-      if (D.locked) { return { ok: false, text: 'Заперто. Выбей замок выстрелами или влезь через окно', sfx: 300, locked: true }; }
+      if (D.locked) { return { ok: false, text: 'Заперто. Удерживай E, чтобы взломать (шумно), или выбей замок выстрелами', sfx: 300, locked: true }; }
       setDoor(D, !D.open); return { ok: true, text: D.garage ? (D.open ? 'Ворота подняты' : 'Ворота закрыты') : (D.open ? 'Дверь открыта' : 'Дверь закрыта'), sfx: D.open ? 520 : 380, door: D };
     }
     const W = n.o, ins = pIn(n.b, p), sg = ins ? 1 : -1;
@@ -503,5 +518,5 @@
   function save(s) { const CT = s.map && s.map.city, out = {}; if (!CT) return out; for (const b of CT.buildings) { const I = b.int; if (!I) continue; const o = { d: I.doors.map(D => [D.open, D.locked ? 1 : 0, D.broke, Math.max(0, D.hp)]), w: I.wins.map(W => W.st) }; if (o.d.some((q, i) => q[0] !== (I.doors[i].layout.open ? 1 : 0) || q[2]) || o.w.some(v => v)) out[b.id] = o; } return out; }
   function load(s, data) { const CT = s.map && s.map.city; if (!CT || !data) return; for (const id in data) { const b = bOf(s, +id), I = b && b.int; if (!I) continue; const o = data[id]; o.d.forEach((q, i) => { const D = I.doors[i]; if (!D) return; D.locked = !!q[1]; D.broke = q[2]; D.hp = q[3]; setDoor(D, q[0] && !D.locked); }); o.w.forEach((v, i) => { if (I.wins[i]) setWin(I.wins[i], v); }); } }
 
-  window.WL_HOUSES_SIM = { P, FH, wallT, isEnterable, layout, build, init, setDoor, lockDoor, setWin, near, use, hit, save, load, F, KINDCOL, hsh, access };
+  window.WL_HOUSES_SIM = { P, FH, wallT, isEnterable, layout, build, init, setDoor, lockDoor, setWin, near, use, pryTick, PRY, hit, save, load, F, KINDCOL, hsh, access };
 })();

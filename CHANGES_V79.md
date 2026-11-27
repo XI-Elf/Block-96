@@ -1,0 +1,5 @@
+# v79
+- Forced entry: hold E at a locked exterior door (3 s) or garage gate (6 s); noise every second; progress ring on screen; cancelled by releasing E or moving. `modules/interiors_sim.js` `pryTick`, `game.js` frame hook and ring, help text updated. `tests/pry.test.js` 13/13.
+- Garages: gates already existed; the passability test now counts them as entries (1025 gates). 9 gates documented as exceptions (`tests/passability-exceptions.json`, 50 entries).
+- Correction of the v78 finding: "9 of 87 night NPCs stall" was a measurement artifact. NPCs beyond the 260 m active bubble (SIM_R) sleep and keep a stale `moving` flag, and loitering near the goal was counted. With both excluded: day 0 of 13, night 2 of 55 (4%). The two are individual cases (one marauder walled in among house cells), not a squad-stacking defect. `tests/stall.test.js` updated; no AI change made.
+- Group relations: matrix has 7 groups and is symmetric; clash tests still pass. No relation change made (no concrete defect identified yet).

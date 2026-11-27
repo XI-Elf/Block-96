@@ -5,6 +5,7 @@
 // Подключение: <script src="modules/map.js"></script> после enemies.js/start.js, до game.js. Опционально: WL_MAP.tick(s, p, active) из кадра.
 (function () {
   'use strict';
+  const { h: el_ } = window.WL_DOM;
   const Wd = window.B96_WORLD;
   if (!Wd) return; // старые уровни без карты 16 районов
   const K = Wd.mPerPx, UP = Wd.up || 4, VK = K / UP;         // вектор слоёв (1/UP пикселя карты) → метры
@@ -102,7 +103,10 @@
     if (ready) return; ready = true;
     const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
     root = document.createElement('div'); root.id = 'b96map'; root.hidden = true;
-    root.innerHTML = '<header><b>КАРТА ГОРОДА</b><span id="b96t"></span><span class="sp"></span><span class="leg">' + Object.values(FAC).map((f) => '<span><i style="background:' + f[0] + '"></i>' + f[1] + '</span>').join('') + '</span><button type="button" id="b96me" hidden>⌖ Где я</button><button type="button" id="b96back" hidden>← Вся карта</button><button type="button" id="b96x">Закрыть · M</button></header><div class="cv"><canvas></canvas></div><footer id="b96h"></footer>';
+    root.replaceChildren(el_('header', null, el_('b', null, 'КАРТА ГОРОДА'), el_('span', { id: 'b96t' }), el_('span', { class: 'sp' }),
+      el_('span', { class: 'leg' }, Object.values(FAC).map((f) => el_('span', null, el_('i', { style: { background: f[0] } }), f[1]))),
+      el_('button', { type: 'button', id: 'b96me', hidden: true }, '⌖ Где я'), el_('button', { type: 'button', id: 'b96back', hidden: true }, '← Вся карта'), el_('button', { type: 'button', id: 'b96x' }, 'Закрыть · M')),
+      el_('div', { class: 'cv' }, el_('canvas')), el_('footer', { id: 'b96h' }));
     document.body.appendChild(root);
     coord = document.createElement('div'); coord.id = 'b96coord'; coord.hidden = true; document.body.appendChild(coord);
     cv = root.querySelector('canvas'); g = cv.getContext('2d'); hdr = root.querySelector('#b96t'); hint = root.querySelector('#b96h'); back = root.querySelector('#b96back');
@@ -147,7 +151,7 @@
     const me = you(), now = performance.now(); coord.hidden = !!p.dead;
     if (now - lastDrawT > 100) {
       lastDrawT = now; const d = districtAt(me.x, me.y), gx = Math.floor(me.x / 100) + 1, gy = Math.floor(me.y / 100) + 1;
-      coord.innerHTML = 'X ' + String(Math.round(me.x)).padStart(4, '0') + ' · Y ' + String(Math.round(me.y)).padStart(4, '0') + ' м<br><small>кв. ' + gx + '-' + gy + ' · ' + (d ? d.name : 'вне районов') + ' · [M] карта</small>';
+      coord.replaceChildren('X ' + String(Math.round(me.x)).padStart(4, '0') + ' · Y ' + String(Math.round(me.y)).padStart(4, '0') + ' м', el_('br'), el_('small', null, 'кв. ' + gx + '-' + gy + ' · ' + (d ? d.name : 'вне районов') + ' · [M] карта'));
       if (open) dirty = true;
     }
     if (open && dirty) render();

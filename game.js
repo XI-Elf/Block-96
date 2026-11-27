@@ -12,24 +12,42 @@
 
   // ---------- убежище: склад, персонаж и статистика переживают рейды (localStorage; без него просто сбрасывается) ----------
   const clone = (o) => JSON.parse(JSON.stringify(o));
-  function freshSave() {
-    return { v: 1, nodes: { n0: true }, node: 'n0', stash: clone(C.META.startStash), pick: null, raids: { n: 0, out: 0, died: 0 },
-      char: { level: 1, xp: 0, stats: { str: C.STATS.base, agi: C.STATS.base, per: C.STATS.base, end: C.STATS.base }, skills: { shoot: 0, scav: 0, med: 0 }, statPts: 0, skillPts: 0 } };
+  const { html: hx, setHtml, h: el_ } = window.WL_DOM; // безопасные шаблоны: данные в innerHTML только через них
+  // формат, миграции, резервная копия и восстановление — modules/save.js (WL_SAVE); ключ localStorage прежний
+  const SV = window.WL_SAVE, freshSave = () => SV.fresh(C);
+  const store = (() => { try { return window.localStorage; } catch (e) { return null; } })();
+  const loaded = SV.load(store, C, C.META.saveKey), saveState = { writable: loaded.writable };
+  let save = loaded.save, lastSaveErr = 0;
+  function persist() {
+    const r = SV.persist(store, save, C.META.saveKey, saveState);
+    if (!r.ok && performance.now() - lastSaveErr > 8000) { lastSaveErr = performance.now(); toast(r.error === 'write-disabled' ? 'Сохранение выключено: файл создан более новой версией игры. Прогресс этой сессии не запишется.' : 'Не удалось сохранить прогресс (' + r.error + '). Проверь место в браузере и приватный режим.', true); }
+    return r.ok;
   }
-  function loadSave() { try { const j = JSON.parse(localStorage.getItem(C.META.saveKey)); if (j && j.v === 1) return j; } catch (e) { /* нет хранилища */ } return freshSave(); }
-  function persist() { try { localStorage.setItem(C.META.saveKey, JSON.stringify(save)); } catch (e) { /* приватный режим */ } }
-  let save = loadSave(); if (!save.nodes) { save.nodes = { n0: true }; save.node = 'n0'; }
+  function saveNotice() {
+    const T = { migrated: 'Сохранение обновлено до нового формата. Копия старого — в резерве.', recovered: 'Сохранение было повреждено: восстановлено из резервной копии.', corrupt: 'Сохранение нечитаемо: начата новая игра, старые данные не удалены (резерв в браузере).', newer: 'Сохранение от более новой версии: запись отключена, чтобы не испортить его.', unavailable: 'Хранилище браузера недоступно: прогресс не сохранится.' };
+    if (T[loaded.status]) toast(T[loaded.status], true);
+    if (loaded.notes.some(n => n.startsWith('dropped:'))) toast('В сохранении были неизвестные предметы: они убраны, исходник — в резервной копии.', true);
+  }
 
+  setTimeout(saveNotice, 500);
+
+  // ---------- контрольные сцены: ?seed=N (мир), ?at=x,y (метры, старт рейда), ?hour=H; без параметров поведение прежнее ----------
+  const QS = (() => { const r = { seed: null, at: null }; try { const q = new URLSearchParams(location.search), sd = q.get('seed'), at = q.get('at');
+    if (sd != null && sd !== '' && Number.isFinite(+sd)) r.seed = (Math.abs(Math.trunc(+sd)) % 2147483647) | 0;
+    if (at) { const a = at.split(',').map(Number); if (a.length === 2 && a.every(Number.isFinite)) r.at = a; } } catch (_) { /* нет location */ } return r; })();
+  function rngFor(seed) { let a = (seed ^ 0x9e3779b9) >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
   // ---------- мир ----------
   let mode = 'base'; // 'base' — отдельная локация-убежище; 'raid' — карта города
   function boot(load, base, entry) {
     mode = base ? 'base' : 'raid';
-    const seed = (Date.now() % 2147483647) | 0, sel = !base && window.WL_START && WL_START.resolve ? WL_START.resolve(seed) : null; // выбор банды: район, фракция
+    const seed = QS.seed != null ? QS.seed : (Date.now() % 2147483647) | 0, sel = !base && window.WL_START && WL_START.resolve ? WL_START.resolve(seed) : null; // выбор банды: район, фракция
     s = base ? S.newBase(seed) : S.newWorld(seed, entry, Object.keys(save.nodes).filter(k => save.nodes[k]), sel && sel.district, sel && sel.fac);
     if (!base) { s.h0 = sel ? sel.hour : 0; s.hour = s.h0; } // рейд стартует в 00:00: все банды в активной фазе
     try { const hq = new URLSearchParams(location.search).get('hour'); if (hq != null && hq !== '' && !isNaN(+hq)) { s.h0 = +hq; s.hour = +hq; } } catch (_) { /* ?hour=22 — старт рейда в заданный час, для проверки ночи */ }
     S.addPlayer(s, LOCAL, 'Странник', load);
-    const p = s.players[LOCAL]; cam.x = p.x - VW / 2; cam.y = p.y - VH / 2;
+    const p = s.players[LOCAL];
+    if (!base && QS.at) { const ax = QS.at[0] * C.PX_PER_M, ay = QS.at[1] * C.PX_PER_M; if (ax > 0 && ay > 0 && ax < s.map.w && ay < s.map.h) { p.x = ax; p.y = ay; p.ax = ax + 100; p.ay = ay; } } // точка старта: проверка проходимости — на вызывающем
+    cam.x = p.x - VW / 2; cam.y = p.y - VH / 2;
     initBuildingIndex(s);
     ground = buildGround(s); fx = []; floaters = []; if (window.WL_FEEL) WL_FEEL.reset();
     $('dead').hidden = true; lastPanel = ''; prints.length = 0; corpses.length = 0; prevEn = []; decals.length = 0;
@@ -151,10 +169,9 @@
   function paveTint() { if (_pt) return _pt; const im = TEX.pave, cv = document.createElement('canvas'); cv.width = im.width; cv.height = im.height; const x = cv.getContext('2d'); x.drawImage(im, 0, 0); x.globalCompositeOperation = 'multiply'; x.fillStyle = 'rgb(230,255,255)'; x.fillRect(0, 0, cv.width, cv.height); x.globalCompositeOperation = 'lighter'; x.fillStyle = 'rgb(40,52,60)'; x.fillRect(0, 0, cv.width, cv.height); return (_pt = cv); }
   // матрица мира (с высотой h в экранных px) для патерна на крыше/фасаде: x,y мировые px -> экран
   const worldM = (hPx) => { const o = SCR(0, 0), px = SCR(1, 0), py = SCR(0, 1); return [px.x - o.x, px.y - o.y, py.x - o.x, py.y - o.y, o.x, o.y - hPx]; };
-  // спрайт-листы v03: props (4x2) и cars (2x2); у каждой ячейки берётся рамка по альфа-каналу
+  // спрайт-лист v03: props (4x2); у каждой ячейки берётся рамка по альфа-каналу
   const SPR = {};
-  const BOX = { props: [[66,9,322,427],[610,10,195,425],[938,42,342,382],[1382,70,360,339],[30,461,387,425],[470,484,402,368],[1042,449,150,427],[1434,446,235,434]],
-    cars: [[19,79,588,482],[647,78,588,490],[31,710,572,460],[647,714,575,458]] };
+  const BOX = { props: [[66,9,322,427],[610,10,195,425],[938,42,342,382],[1382,70,360,339],[30,461,387,425],[470,484,402,368],[1042,449,150,427],[1434,446,235,434]] };
   function loadSheet(name) {
     const im = new Image(); im.onload = () => { SPR[name] = { im, cells: BOX[name].map(b => ({ sx: b[0], sy: b[1], sw: b[2], sh: b[3] })) }; };
     im.src = (window.B96_ASSET_BASE || 'assets/') + name + '.png';
@@ -569,7 +586,7 @@
   }
   // ---------- дальний фон за границей карты: панельные дома, ТЭЦ с дымом ----------
   const prints = [], decals = []; let lastPrint = { x: 0, y: 0, n: 0 };
-  const flurries = Array.from({ length: 150 }, () => [Math.random(), Math.random(), Math.random()]);
+  const flurries = (() => { const R = QS.seed != null ? rngFor(QS.seed) : Math.random; return Array.from({ length: 150 }, () => [R(), R(), R()]); })(); // с ?seed= метель одинакова
   function drawCarFx(dt, p) { // огонь и дым горящих и сгоревших машин, подсказки вблизи
     const t = performance.now() / 1000;
     for (const c of s.cars || []) {
@@ -943,14 +960,7 @@ const nightK = (h) => (h >= 17 || h < 9) ? 1 : h >= 16 ? (h - 16) : h >= 9 && h 
     if (k === 'lamp') lampLight(w);
     if (k === 'lamp' || k === 'tree' || k === 'pylon' || k === 'pole') return drawProp(w);
     const wp = rectPts(w);
-    if (k === 'car' && SPR.cars && window.B96_CARSPRITE !== false) {
-      const q = SCR(w.x + w.w / 2, w.y + w.h / 2), alongX = w.w >= w.h, fl = w.fl != null ? w.fl : hsh(w.x | 0, w.y | 0) > 0.5, idx = alongX ? (fl ? 0 : 2) : (fl ? 1 : 3), ww = (w.w + w.h) * Kx * 0.85;
-      ctx.fillStyle = 'rgba(0,0,0,0.38)'; ctx.beginPath(); ctx.ellipse(q.x, q.y + (w.w + w.h) * Kx * 0.1, ww * 0.4, ww * 0.17, 0, 0, 7); ctx.fill();
-      if (w.wreck) { ctx.save(); ctx.filter = 'brightness(0.3) saturate(0.2)'; }
-      sprSheared('cars', idx, q.x, q.y + (w.w + w.h) * Kx * 0.2, ww, alongX ? -1 : 1, window.B96_CARSAG != null ? window.B96_CARSAG : 0.16);
-      if (w.wreck) ctx.restore();
-      if (window.B96_CARBOX) { const P = wp.map(p => SCR(p.x, p.y)), Hh = MH(1.44); ctx.strokeStyle = '#ff0'; ctx.lineWidth = 1.5; ctx.beginPath(); P.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)); ctx.closePath(); ctx.stroke(); ctx.beginPath(); P.forEach((p, i) => i ? ctx.lineTo(p.x, p.y - Hh) : ctx.moveTo(p.x, p.y - Hh)); ctx.closePath(); ctx.stroke(); ctx.beginPath(); P.forEach(p => { ctx.moveTo(p.x, p.y); ctx.lineTo(p.x, p.y - Hh); }); ctx.stroke(); }
-    } else if (k === 'rack' && SPR.props && window.B96_CARSPRITE) {
+    if (k === 'rack' && SPR.props && window.B96_CARSPRITE) {
       const q = SCR(w.x + w.w / 2, w.y + w.h / 2); spr('props', 4, q.x, q.y + (w.w + w.h) * Kx * 0.22, Math.max(SC * 1.4, (w.w + w.h) * Kx * 1.05), null);
     } else if (k === 'crate' && SPR.props && window.B96_CARSPRITE) {
       const q = SCR(w.x + w.w / 2, w.y + w.h / 2); spr('props', 3, q.x, q.y + (w.w + w.h) * Kx * 0.22, Math.max(SC * 0.9, (w.w + w.h) * Kx * 1.05), null);
@@ -1259,6 +1269,9 @@ const nightK = (h) => (h >= 17 || h < 9) ? 1 : h >= 16 ? (h - 16) : h >= 9 && h 
     if (mode === 'raid' && !p.dead && started) { const hr = s.hour == null ? 10 : s.hour, hh = Math.floor(hr), mm = Math.floor((hr - hh) * 60); ctx.fillStyle = 'rgba(190,200,210,0.55)'; ctx.font = '600 13px "IBM Plex Mono", monospace'; ctx.textAlign = 'right'; ctx.fillText(String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0'), W - 16, 24); ctx.textAlign = 'left'; } // часы, как в референсе
   }
   function drawSearch(p) {
+    if (p.pry && !p.search) { const D = (window.WL_HOUSES_SIM && WL_HOUSES_SIM.near(s, p, 22) || {}).o; if (D) { const dq = SCR(D.x, D.y), x = dq.x, y = dq.y - MH(1.1), t = Math.min(1, p.pry.t / p.pry.need);
+      ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(255,255,255,0.15)'; ctx.beginPath(); ctx.arc(x, y, 18, 0, 7); ctx.stroke(); ctx.strokeStyle = '#ff4d5e'; ctx.beginPath(); ctx.arc(x, y, 18, -Math.PI / 2, -Math.PI / 2 + t * Math.PI * 2); ctx.stroke();
+      ctx.font = '600 11px "Chakra Petch", sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = '#ff4d5e'; ctx.fillText('ВЗЛОМ · шум', x, y - 26); } return; }
     if (!p.search) {
       // подсказка у ближайшего контейнера
       let best = null, bd = 20; for (const c of s.containers) if (!c.searched && (c.inb == null || c.inb === insideId)) { const d = Math.hypot(c.x - p.x, c.y - p.y); if (d < bd) { bd = d; best = c; } }
@@ -1306,8 +1319,8 @@ const nightK = (h) => (h >= 17 || h < 9) ? 1 : h >= 16 ? (h - 16) : h >= 9 && h 
       $('wAmmo').textContent = `${ws.w.mag}`; $('wRes').textContent = `/ ${S.invCount(p, ws.def.ammo)} ${C.ITEMS[ws.def.ammo].name.replace('Патроны ', '')}`;
       $('wRange').textContent = `эфф. ${Math.round(ws.eff / C.PX_PER_M)} м · предел ${Math.round(ws.max / C.PX_PER_M)} м`;
     }
-    const heal = p.inv.find(it => C.ITEMS[it.id].kind === 'heal'), slotsHtml = [0, 1, 2].map(i => { const w = p.weapons[i]; return `<span class="slot${i === p.cur ? ' on' : ''}${w ? '' : ' empty'}" data-slot="${i}"><b>${i + 1}</b>${w ? C.WEAPONS[w.id].name : '—'}</span>`; }).join('') + `<span class="slot${heal ? '' : ' empty'}" data-slot="3"><b>4</b>${heal ? C.ITEMS[heal.id].name + ' ×' + heal.n : '—'}</span>`;
-    if (slotsHtml !== lastSlots) { lastSlots = slotsHtml; $('slots').innerHTML = slotsHtml; }
+    const heal = p.inv.find(it => C.ITEMS[it.id].kind === 'heal'), slotsParts = [0, 1, 2].map(i => { const w = p.weapons[i]; return hx`<span class="slot${i === p.cur ? ' on' : ''}${w ? '' : ' empty'}" data-slot="${i}"><b>${i + 1}</b>${w ? C.WEAPONS[w.id].name : '—'}</span>`; }), slotsTail = hx`<span class="slot${heal ? '' : ' empty'}" data-slot="3"><b>4</b>${heal ? C.ITEMS[heal.id].name + ' ×' + heal.n : '—'}</span>`, slotsHtml = hx`${slotsParts}${slotsTail}`, slotsKey = String(slotsHtml);
+    if (slotsKey !== lastSlots) { lastSlots = slotsKey; setHtml($('slots'), slotsHtml); }
     const A = C.ABILITIES.adrenaline;
     $('abil').textContent = p.adren > 0 ? `${A.name} · ${p.adren.toFixed(1)} с` : p.adrenCd > 0 ? `${A.name} · ${Math.ceil(p.adrenCd)} с` : `[Q] ${A.name} готов`;
     $('abil').className = 'abil' + (p.adren > 0 ? ' act' : p.adrenCd > 0 ? '' : ' ready');
@@ -1335,32 +1348,32 @@ const nightK = (h) => (h >= 17 || h < 9) ? 1 : h >= 16 ? (h - 16) : h >= 9 && h 
   document.addEventListener('pointerdown', (e) => { if (e.target.closest('button')) e.preventDefault(); });
   function togglePanel(id) { const el = $(id), other = $(id === 'inv' ? 'char' : 'inv'); el.hidden = !el.hidden; if (!el.hidden) other.hidden = true; lastPanel = ''; mouse.down = false; if (el.hidden) refocus(); }
   function renderPanels(p, d) {
-    let html = '', target = null;
+    let html = null, target = null;
     if (!$('inv').hidden) {
       target = 'invBody';
       const rows = p.inv.map((it, i) => {
         const def = C.ITEMS[it.id];
-        const btn = def.kind === 'heal' || def.kind === 'food' ? `<button data-a="use" data-i="${i}">Использовать</button>` : def.kind === 'weapon' ? `<button data-a="equip" data-i="${i}">В руки (слот ${p.cur + 1})</button>` : def.kind === 'attach' ? `<button data-a="attach" data-i="${i}">Установить</button>` : '';
-        return `<tr><td class="k-${def.kind}">${def.name}</td><td class="num">${it.n}</td><td class="num">${(def.w * it.n).toFixed(1)}</td><td class="act">${btn}<button class="ghost" data-a="drop" data-i="${i}">Выбросить</button></td></tr>`;
-      }).join('');
+        const btn = def.kind === 'heal' || def.kind === 'food' ? hx`<button data-a="use" data-i="${i}">Использовать</button>` : def.kind === 'weapon' ? hx`<button data-a="equip" data-i="${i}">В руки (слот ${p.cur + 1})</button>` : def.kind === 'attach' ? hx`<button data-a="attach" data-i="${i}">Установить</button>` : '';
+        return hx`<tr><td class="k-${def.kind}">${def.name}</td><td class="num">${it.n}</td><td class="num">${(def.w * it.n).toFixed(1)}</td><td class="act">${btn}<button class="ghost" data-a="drop" data-i="${i}">Выбросить</button></td></tr>`;
+      });
       const wpns = p.weapons.map((w, i) => {
         const def = C.WEAPONS[w.id], m = S.attachMods(w);
-        const atts = Object.keys(w.att || {}).map(sl => `<button class="ghost" data-a="detach" data-k="${sl}"${i === p.cur ? '' : ' disabled'}>снять: ${C.ITEMS[w.att[sl]].name}</button>`).join('');
-        return `<li><b>${i + 1}</b> ${def.name} <span>${w.mag}/${def.mag} · ${C.ITEMS[def.ammo].name} · эфф. ${Math.round(def.eff * d.rangeMul * m.eff / C.PX_PER_M)} м</span> ${atts}</li>`;
-      }).join('');
-      html = `<ul class="wl">${wpns}</ul><table><thead><tr><th>Предмет</th><th class="num">Шт.</th><th class="num">Кг</th><th></th></tr></thead><tbody>${rows || '<tr><td colspan="4" class="muted">Пусто. Обыскивай ящики, шкафчики и багажники клавишей E.</td></tr>'}</tbody></table>
+        const atts = Object.keys(w.att || {}).map(sl => hx`<button class="ghost" data-a="detach" data-k="${sl}"${i === p.cur ? '' : ' disabled'}>снять: ${C.ITEMS[w.att[sl]].name}</button>`);
+        return hx`<li><b>${i + 1}</b> ${def.name} <span>${w.mag}/${def.mag} · ${C.ITEMS[def.ammo].name} · эфф. ${Math.round(def.eff * d.rangeMul * m.eff / C.PX_PER_M)} м</span> ${atts}</li>`;
+      });
+      html = hx`<ul class="wl">${wpns}</ul><table><thead><tr><th>Предмет</th><th class="num">Шт.</th><th class="num">Кг</th><th></th></tr></thead><tbody>${rows.length ? rows : hx`<tr><td colspan="4" class="muted">Пусто. Обыскивай ящики, шкафчики и багажники клавишей E.</td></tr>`}</tbody></table>
         <p class="muted">Вес: ${S.invWeight(p).toFixed(1)} из ${d.carry} кг. Перегруз снижает скорость на 40%. Металлолом, провода и неон-ячейки пойдут на строительство базы.</p>`;
     } else if (!$('char').hidden) {
       target = 'charBody';
-      const st = Object.keys(C.STATS.names).map(k => `<tr><td>${C.STATS.names[k]}<small>${C.STATS.hint[k]}</small></td><td class="num">${p.stats[k]}</td><td>${p.statPts > 0 && mode === 'base' && p.stats[k] < C.STATS.max ? `<button data-a="stat" data-k="${k}">+</button>` : ''}</td></tr>`).join('');
-      const sk = Object.keys(C.SKILLS.names).map(k => `<tr><td>${C.SKILLS.names[k]}<small>${C.SKILLS.hint[k]}</small></td><td class="num">${p.skills[k]}</td><td>${p.skillPts > 0 && mode === 'base' && p.skills[k] < C.SKILLS.max ? `<button data-a="skill" data-k="${k}">+</button>` : ''}</td></tr>`).join('');
-      html = `<p class="lv">Уровень ${p.level} · ${p.xp}/${S.xpNeed(p.level)} XP</p>
-        <h3>Характеристики <span>${p.statPts ? `свободно: ${p.statPts}` : ''}</span></h3><table>${st}</table>
-        <h3>Навыки <span>${p.skillPts ? `свободно: ${p.skillPts}` : ''}</span></h3><table>${sk}</table>
+      const st = Object.keys(C.STATS.names).map(k => hx`<tr><td>${C.STATS.names[k]}<small>${C.STATS.hint[k]}</small></td><td class="num">${p.stats[k]}</td><td>${p.statPts > 0 && mode === 'base' && p.stats[k] < C.STATS.max ? hx`<button data-a="stat" data-k="${k}">+</button>` : ''}</td></tr>`);
+      const sk = Object.keys(C.SKILLS.names).map(k => hx`<tr><td>${C.SKILLS.names[k]}<small>${C.SKILLS.hint[k]}</small></td><td class="num">${p.skills[k]}</td><td>${p.skillPts > 0 && mode === 'base' && p.skills[k] < C.SKILLS.max ? hx`<button data-a="skill" data-k="${k}">+</button>` : ''}</td></tr>`);
+      html = hx`<p class="lv">Уровень ${p.level} · ${p.xp}/${S.xpNeed(p.level)} XP</p>
+        <h3>Характеристики <span>${p.statPts ? hx`свободно: ${p.statPts}` : ''}</span></h3><table>${st}</table>
+        <h3>Навыки <span>${p.skillPts ? hx`свободно: ${p.skillPts}` : ''}</span></h3><table>${sk}</table>
         <h3>Способность</h3><p class="muted">[Q] ${C.ABILITIES.adrenaline.name}: ${C.ABILITIES.adrenaline.dur} с ×${C.ABILITIES.adrenaline.speed} скорость, быстрее перезарядка. Перезарядка ${C.ABILITIES.adrenaline.cd} с.</p>
         <h3>Итог</h3><dl><dt>Здоровье</dt><dd>${d.maxHp}</dd><dt>Переносимый вес</dt><dd>${d.carry} кг</dd><dt>Скорость</dt><dd>${(d.speed / C.PX_PER_M).toFixed(1)} м/с</dd><dt>Дальность</dt><dd>×${d.rangeMul.toFixed(2)}</dd><dt>Разброс</dt><dd>×${d.spreadMul.toFixed(2)}</dd><dt>Удар прикладом</dt><dd>${d.melee}</dd></dl>`;
     }
-    if (target && html !== lastPanel) { $(target).innerHTML = html; lastPanel = html; }
+    { const key = html == null ? '' : String(html); if (target && key !== lastPanel) { setHtml($(target), html); lastPanel = key; } }
   }
   document.addEventListener('click', (e) => {
 
@@ -1375,7 +1388,7 @@ const nightK = (h) => (h >= 17 || h < 9) ? 1 : h >= 16 ? (h - 16) : h >= 9 && h 
       const st = document.createElement('style'); st.textContent = '#found{position:fixed;right:18px;top:50%;transform:translateY(-50%);min-width:210px;max-width:260px;background:rgba(10,14,12,.93);border:1px solid #2b3a33;border-top:3px solid #c9b07a;padding:10px 12px;z-index:30;font:13px "IBM Plex Mono",monospace;color:#cdd6d0;pointer-events:none;transition:opacity .3s}#found h4{margin:0 0 8px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#c9b07a}#found div{display:flex;justify-content:space-between;gap:10px;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.06)}#found div b{color:#e9eee8;font-weight:600}#found .e{color:#7f8a83}';
       document.head.appendChild(st); foundEl = document.createElement('div'); foundEl.id = 'found'; document.body.appendChild(foundEl);
     }
-    foundEl.innerHTML = '<h4>' + (ev.name || 'Контейнер') + '</h4>' + (ev.items.length ? ev.items.map(([n, k]) => '<div><span>' + n + '</span><b>×' + k + '</b></div>').join('') : '<div class="e">Пусто</div>');
+    foundEl.replaceChildren(el_('h4', null, ev.name || 'Контейнер'), ...(ev.items.length ? ev.items.map(([n, k]) => el_('div', null, el_('span', null, n), el_('b', null, '×' + k))) : [el_('div', { class: 'e' }, 'Пусто')]));
     foundEl.style.opacity = '1'; foundEl.hidden = false; foundT = performance.now() + 5000;
     setTimeout(() => { if (foundEl && performance.now() >= foundT - 50) foundEl.style.opacity = '0'; }, 5100);
   }
@@ -1387,19 +1400,12 @@ const nightK = (h) => (h >= 17 || h < 9) ? 1 : h >= 16 ? (h - 16) : h >= 9 && h 
   // ---------- конец рейда и подготовка к следующему ----------
   function finishRaid(success) {
     if (ended) return; ended = true; mouse.down = false; tMove.x = tMove.y = tAim.x = tAim.y = 0;
-    const p = s.players[LOCAL], brought = [];
-    save.char = { level: p.level, xp: p.xp, stats: clone(p.stats), skills: clone(p.skills), statPts: p.statPts, skillPts: p.skillPts };
-    if (success) {
-      save.raids.out++;
-      const add = (id, n) => { if (id === C.EXTRACTION.keyItem || n <= 0) return; save.stash.items[id] = (save.stash.items[id] || 0) + n; brought.push(`${C.ITEMS[id].name} × ${n}`); };
-      for (const it of p.inv) add(it.id, it.n);
-      for (const w of p.weapons) { save.stash.weapons.push({ id: w.id, att: clone(w.att || {}) }); brought.push(C.WEAPONS[w.id].name + (Object.keys(w.att || {}).length ? ' (с навесным)' : '')); add(C.WEAPONS[w.id].ammo, w.mag); }
-    } else { save.raids.died++; save.pick = null; } // смерть: теряется только то, что было при себе в рейде (взятое со склада и найденное); склад убежища постоянный, уровень и статы остаются
+    const p = s.players[LOCAL], brought = SV.applyRaid(save, p, success, C);
     persist();
     $('resTitle').textContent = success ? 'Эвакуация завершена' : 'Ты погиб';
     $('resTitle').className = success ? 'ok' : '';
     $('deadStats').textContent = `Уровень ${p.level} · убито ${p.kills} · обыскано ${p.looted} · время ${Math.floor(s.t / 60)} мин ${Math.floor(s.t % 60)} с`;
-    $('resList').innerHTML = success ? `<h3>Унесено в убежище</h3><p>${brought.join(' · ') || 'ничего'}</p>` : '<h3>Потеряно</h3><p>Всё, что было при тебе в рейде. Склад убежища цел, уровень и характеристики остались.</p>';
+    $('resList').replaceChildren(el_('h3', null, success ? 'Унесено в убежище' : 'Потеряно'), el_('p', null, success ? (brought.join(' · ') || 'ничего') : 'Всё, что было при тебе в рейде. Склад убежища цел, уровень и характеристики остались.'));
     $('restart').textContent = 'В убежище';
     $('dead').hidden = false;
   }
@@ -1423,15 +1429,15 @@ const nightK = (h) => (h >= 17 || h < 9) ? 1 : h >= 16 ? (h - 16) : h >= 9 && h 
     const pk = save.pick, d = S.derived({ stats: save.char.stats, skills: save.char.skills });
     let wgt = 0; for (const i of pk.w) wgt += stashW(save.stash.weapons[i].id); for (const id in pk.items) wgt += stashW(id) * pk.items[id];
     const wrows = save.stash.weapons.map((w, i) => { const on = pk.w.includes(i), def = C.WEAPONS[w.id], at = Object.keys(w.att || {}).map(k => C.ITEMS[w.att[k]].name).join(', ');
-      return `<tr><td class="k-weapon">${def.name}<small>${at || 'без навесного'} · ${C.ITEMS[def.ammo].name}</small></td><td class="num">${C.ITEMS[w.id].w}</td><td class="act"><button data-p="w" data-i="${i}" class="${on ? '' : 'ghost'}">${on ? 'Берёшь' : 'Взять'}</button></td></tr>`; }).join('');
+      return hx`<tr><td class="k-weapon">${def.name}<small>${at || 'без навесного'} · ${C.ITEMS[def.ammo].name}</small></td><td class="num">${C.ITEMS[w.id].w}</td><td class="act"><button data-p="w" data-i="${i}" class="${on ? '' : 'ghost'}">${on ? 'Берёшь' : 'Взять'}</button></td></tr>`; });
     const ids = Object.keys(save.stash.items).filter(id => save.stash.items[id] > 0 && C.META.carryKinds.includes(C.ITEMS[id].kind));
-    const irows = ids.map(id => `<tr><td class="k-${C.ITEMS[id].kind}">${C.ITEMS[id].name}</td><td class="num">${save.stash.items[id]}</td><td class="act"><button class="ghost" data-p="dec" data-id="${id}">−</button> <span class="num">${pk.items[id] || 0}</span> <button class="ghost" data-p="inc" data-id="${id}">+</button> <button class="ghost" data-p="all" data-id="${id}">все</button></td></tr>`).join('');
+    const irows = ids.map(id => hx`<tr><td class="k-${C.ITEMS[id].kind}">${C.ITEMS[id].name}</td><td class="num">${save.stash.items[id]}</td><td class="act"><button class="ghost" data-p="dec" data-id="${id}">−</button> <span class="num">${pk.items[id] || 0}</span> <button class="ghost" data-p="inc" data-id="${id}">+</button> <button class="ghost" data-p="all" data-id="${id}">все</button></td></tr>`);
     const mats = Object.keys(save.stash.items).filter(id => save.stash.items[id] > 0 && !C.META.carryKinds.includes(C.ITEMS[id].kind)).map(id => `${C.ITEMS[id].name} ${save.stash.items[id]}`).join(' · ');
-    $('prepBody').innerHTML = `<p class="lv">Уровень ${save.char.level} · рейдов ${save.raids.n} · вышел ${save.raids.out} · погиб ${save.raids.died}</p>
+    setHtml($('prepBody'), hx`<p class="lv">Уровень ${save.char.level} · рейдов ${save.raids.n} · вышел ${save.raids.out} · погиб ${save.raids.died}</p>
       <h3>Оружие со склада <span>до 3 стволов</span></h3><table><tbody>${wrows}</tbody></table>
-      <h3>Снаряжение <span>склад · в рейд</span></h3><table><tbody>${irows || '<tr><td class="muted">Склад пуст.</td></tr>'}</tbody></table>
+      <h3>Снаряжение <span>склад · в рейд</span></h3><table><tbody>${irows.length ? irows : hx`<tr><td class="muted">Склад пуст.</td></tr>`}</tbody></table>
       <p class="${wgt > d.carry ? 'warn' : 'muted'}">Вес: ${wgt.toFixed(1)} из ${d.carry} кг${wgt > d.carry ? ': перегруз, бег и движение медленнее' : ''}</p>
-      ${mats ? `<p class="muted">На базе (для стройки): ${mats}</p>` : ''}`;
+      ${mats ? hx`<p class="muted">На базе (для стройки): ${mats}</p>` : ''}`);
   }
   document.addEventListener('click', (e) => {
     const b = e.target.closest('button[data-p]'); if (!b) return; const pk = save.pick, id = b.dataset.id, st = save.stash.items[id] || 0;
@@ -1473,6 +1479,7 @@ const nightK = (h) => (h >= 17 || h < 9) ? 1 : h >= 16 ? (h - 16) : h >= 9 && h 
     const dt = Math.min(0.1, (now - last) / 1000); last = now;
     if (started && !ended && !picking) {
       acc += dt;
+      if (mode === 'raid' && window.WL_HOUSES_SIM && WL_HOUSES_SIM.pryTick) { const pp = s.players[LOCAL], pr = WL_HOUSES_SIM.pryTick(s, pp, dt, keys.has('KeyE') && !pp.search); if (pr && pr.done) { toast(pr.text, true); sfx(520, 0.25, 0.14); } }
       let cmd = readCmd(), n = 0;
       while (acc >= TICK && n < 6) {
         const had = actions.length; S.step(s, { [LOCAL]: cmd }, actions.splice(0), TICK);

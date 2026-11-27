@@ -17,7 +17,7 @@ function metricMap(result) {
 
 async function main() {
   const browser = await chromium.launch({
-    executablePath: '/usr/bin/chromium',
+    executablePath: process.env.B96_CHROMIUM || undefined, // set B96_CHROMIUM to use a specific browser binary
     headless: true,
     args: ['--no-sandbox', '--disable-dev-shm-usage'],
   });

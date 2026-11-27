@@ -451,6 +451,27 @@
     if (far.length) pick(s, far).key = true; else cont[cont.length - 1].key = true;
     s.containers = cont; delete s._grid;
   }
+  // Маска клеток карты (Uint8Array Wd.w*Wd.h), где вода вырезается под настилом каждого моста: полоса ширины настила + 1 клетка по бокам,
+  // концы продлены на 24 м (подходы: проверка проходимости v77 стартует за 22 м до настила). Возвращает null, если мостов нет.
+  function bridgeCarve(Wd, P, MP) {
+    const br = Wd.bridges || []; if (!br.length) return null;
+    const m = new Uint8Array(Wd.w * Wd.h), cell = MP / P; // клетка в метрах
+    for (const b of br) {
+      const half = b.w / 2 + cell, pts = b.pts;
+      for (let i = 0; i + 1 < pts.length; i++) {
+        let [x0, y0] = pts[i], [x1, y1] = pts[i + 1]; const L = Math.hypot(x1 - x0, y1 - y0) || 1, ux = (x1 - x0) / L, uy = (y1 - y0) / L, ext = 24;
+        if (i === 0) { x0 -= ux * ext; y0 -= uy * ext; } if (i + 2 === pts.length) { x1 += ux * ext; y1 += uy * ext; }
+        const xa = Math.max(0, Math.floor((Math.min(x0, x1) - half) / cell)), xb = Math.min(Wd.w - 1, Math.ceil((Math.max(x0, x1) + half) / cell));
+        const ya = Math.max(0, Math.floor((Math.min(y0, y1) - half) / cell)), yb = Math.min(Wd.h - 1, Math.ceil((Math.max(y0, y1) + half) / cell));
+        const dx = x1 - x0, dy = y1 - y0, l2 = dx * dx + dy * dy || 1;
+        for (let y = ya; y <= yb; y++) for (let x = xa; x <= xb; x++) {
+          const cx = (x + 0.5) * cell, cy = (y + 0.5) * cell; let t = ((cx - x0) * dx + (cy - y0) * dy) / l2; t = t < 0 ? 0 : t > 1 ? 1 : t;
+          if (Math.hypot(cx - (x0 + dx * t), cy - (y0 + dy * t)) <= half) m[y * Wd.w + x] = 1;
+        }
+      }
+    }
+    return m;
+  }
   // ---------- город 15 районов (window.B96_WORLD из tools/build_world.py, метры → пиксели) ----------
   function setDoorCells(b, open) { b.doorOpen = open ? 1 : 0; for (const w of b.doorCells || []) { if (open) { if (w.w) { w._w = w.w; w._h = w.h; w.w = 0; w.h = 0; } } else if (!w.w && w._w) { w.w = w._w; w.h = w._h; } } }
   function genWorld(s) {
@@ -475,8 +496,9 @@
     // вода (непроходима, пули летят над ней); мосты уже вырезаны из маски
     { let prev = null; const emit = (y, a, b, hRows) => add(a * MP, y * MP, (b - a) * MP, hRows * MP, 'water', '#1f3550', { low: true, fly: true });
       const open = new Map(); // ключ "a,b" → начало (y)
+      const carve = bridgeCarve(Wd, P, MP); // v77: вода под настилом мостов вырезается всегда (M5/M7 в данных частично залиты)
       for (let y = 0; y <= Wd.h; y++) {
-        const cur = new Map(); if (y < Wd.h) { const r = Wd.waterRle[y]; for (let i = 0; i + 1 < r.length; i += 2) cur.set(r[i] + ',' + r[i + 1], 1); }
+        const cur = new Map(); if (y < Wd.h) { const r = Wd.waterRle[y]; for (let i = 0; i + 1 < r.length; i += 2) { if (!carve) { cur.set(r[i] + ',' + r[i + 1], 1); continue; } let a = r[i]; const b = r[i + 1]; for (let x = a; x <= b; x++) { if (x === b || carve[y * Wd.w + x]) { if (x > a) cur.set(a + ',' + x, 1); a = x + 1; } } } }
         for (const [k, y0] of open) if (!cur.has(k)) { const [a, b] = k.split(',').map(Number); emit(y0, a, b, y - y0); open.delete(k); }
         for (const k of cur.keys()) if (!open.has(k)) open.set(k, y);
       } void prev; }
@@ -486,6 +508,11 @@
     const RS = Wd.roadSamples.map(q => ({ x: q[0] * P, y: q[1] * P, a: q[2], w: q[3] * P })), RG = new Map(), RC = 400;
     RS.forEach((q, i) => { const k = Math.floor(q.x / RC) + ',' + Math.floor(q.y / RC); if (!RG.has(k)) RG.set(k, []); RG.get(k).push(i); });
     const nearestRoad = (x, y) => { let best = null, bd = 1e18; const cx = Math.floor(x / RC), cy = Math.floor(y / RC); for (let r = 0; r < 6 && !best; r++) for (let j = -r; j <= r; j++) for (let i = -r; i <= r; i++) { if (Math.max(Math.abs(i), Math.abs(j)) !== r) continue; const l = RG.get((cx + i) + ',' + (cy + j)); if (l) for (const n of l) { const q = RS[n], d = (q.x - x) ** 2 + (q.y - y) ** 2; if (d < bd) { bd = d; best = q; } } } return best; };
+    // v77: is the strip in front of a would-be door (centre c + offset o) free of earlier buildings? Tests points 11, 19 and 27 px out, 0 and +-5 px sideways.
+    const frontClear = (c, o, selfId) => { const l = Math.hypot(o[0], o[1]) || 1, nx = o[0] / l, ny = o[1] / l, tx = -ny, ty = nx, bx = c.x + o[0], by = c.y + o[1];
+      for (const dist of [11, 19, 27]) for (const lat of [0, 5, -5]) { const x = bx + nx * dist + tx * lat, y = by + ny * dist + ty * lat;
+        for (const b of CT.buildings) if (b.id !== selfId && x > b.minX && x < b.maxX && y > b.minY && y < b.maxY && inPoly(x, y, b.poly)) return false; }
+      return true; };
     // Land-use clearance for expanded residential footprints. All geometry downstream
     // (outer walls, interiors, collisions) shares the adjusted centre and dimensions.
     // Road raster is authoritative: do not merely hide overlapping road pixels.
@@ -562,8 +589,8 @@
       if (ent && HS) { // modules/houses: exact AABB shell with door/window openings, rooms, furniture
         const T0 = HS.wallT(kind) * P, mk = (kw, kd) => [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([k, m]) => ({ x: c.x + ux * kw * k + vx * kd * m, y: c.y + uy * kw * k + vy * kd * m }));
         inner = mk(hw - T0, hd - T0);
-        const bp = nearestRoad(c.x, c.y), sides = [[-vx * hd, -vy * hd], [ux * hw, uy * hw], [vx * hd, vy * hd], [-ux * hw, -uy * hw]].map((o, k) => ({ k, d: bp ? Math.hypot(c.x + o[0] - bp.x, c.y + o[1] - bp.y) : 0 })).sort((p, q) => p.d - q.d);
-        doorFace = sides[0].k;
+        const bp = nearestRoad(c.x, c.y), sides = [[-vx * hd, -vy * hd], [ux * hw, uy * hw], [vx * hd, vy * hd], [-ux * hw, -uy * hw]].map((o, k) => ({ k, o, d: bp ? Math.hypot(c.x + o[0] - bp.x, c.y + o[1] - bp.y) : 0 })).sort((p, q) => p.d - q.d);
+        doorFace = (sides.find(q => frontClear(c, q.o, i)) || sides[0]).k; // v77: the door looks at the nearest road side whose front is not a neighbour's wall
         hsInt = HS.build(s, { id: i, c, ux, uy, vx, vy, kind, ang, w: bw * P, d: bd * P, h: bh, doorFace }, { add, mkCont: (k, x, y) => { const o = mkCont(s, k, x, y); cont.push(o); return o; } });
       } else if (ent) {
         const T0 = ind ? 12 : 5, iw = hw - T0, id_ = hd - T0, mk = (kw, kd) => [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([k, m]) => ({ x: c.x + ux * kw * k + vx * kd * m, y: c.y + uy * kw * k + vy * kd * m }));

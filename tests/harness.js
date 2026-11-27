@@ -5,7 +5,7 @@ function load(extra) {
   const win = { addEventListener() {}, location: { search: '' }, devicePixelRatio: 1, innerWidth: 1280, innerHeight: 720 };
   win.window = win; win.performance = performance;
   const ctx = vm.createContext(Object.assign(win, { console, Math, Date, JSON, Object, Array, Set, Map, Float32Array, Uint8Array, Uint16Array, Int32Array, Uint32Array, Float64Array, Int16Array, Uint8ClampedArray, ArrayBuffer, document: { getElementById: () => null, createElement: () => ({ getContext: () => null, style: {} }), addEventListener() {} }, localStorage: { getItem() { return null; }, setItem() {} }, setTimeout, clearTimeout }));
-  const files = ['config.js', 'behavior/factions.js', 'modules/vehicles-phys.js', 'world15.js', 'road_network.js', 'modules/bridges-data.js', 'modules/bridges.js', 'nav.js', 'modules/interiors_sim.js', 'sim.js'].concat(extra && extra.pre || [], ['enemies.js', 'player.js', 'modules/vision.js', 'behavior/extras.js'], extra && extra.post || []);
+  const files = ['config.js', 'modules/dom.js', 'behavior/factions.js', 'modules/vehicles-phys.js', 'world15.js', 'road_network.js', 'modules/bridges-data.js', 'modules/bridges.js', 'nav.js', 'modules/interiors_sim.js', 'sim.js'].concat(extra && extra.pre || [], ['enemies.js', 'player.js', 'modules/vision.js', 'behavior/extras.js'], extra && extra.post || []);
   for (const f of files) { const fp = path.join(ROOT, f); if (!fs.existsSync(fp)) { if (extra && extra.optional) continue; throw new Error('missing ' + f); } try { vm.runInContext(fs.readFileSync(fp, 'utf8'), ctx, { filename: f }); } catch (e) { console.error('LOAD FAIL', f, e.message); throw e; } }
   return ctx;
 }

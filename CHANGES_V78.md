@@ -1,0 +1,6 @@
+# v78
+Tests and measurements only; no game code changed since v77 (the game artifact is identical).
+- `tests/districts-nav.test.js` (v77.4): all 16 district anchors connected on foot (nav grid flood fill), both deck ends of all 7 bridges in the main walkable network, A* finds a route for 16 district pairs (slowest ~0.3 s). Verified to fail when the bridge water carve is removed.
+- `tests/stall.test.js` (v77.4): 5 sim-minutes, counts NPCs that report moving but advance < 3 m in most 15 s samples. Baseline: day 0 of 20 movers, night 9 of 87 (10%). The 9 are marauder/Shaika/Sobor squads whose members stand within 1-9 px of each other with `direct` movement and no wall nearby, so they push each other. Guard rails 5% (day) / 15% (night), not targets. Finding for the AI stage, not fixed here.
+- `tests/perception.test.js` (v79.1): an unseen squad 90 m away never gets the player position (3 seeds); a shot is heard probabilistically within 220 m at night and the squad investigates the shot position, not the player; a shot 300 m away is never heard. Documented exception: night-raid ring squads start knowing the player position (enemies.js, `sq.known = p`), a designed pursuit mechanic.
+- Not done: v77.3 stairs/floors/agent sizes, v79.2-79.5 (squad/faction separation, simulation LOD with identical seeds; LOD only if a hotspot is proven, none was measured yet).

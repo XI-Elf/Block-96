@@ -26,7 +26,7 @@ All are PNG. "Tile" = must tile seamlessly in both directions. Sizes are the cur
 | `floor.png` | 512x512 RGB | tile | interior floors (inside enterable houses) |
 | `rust.png` | 512x512 RGB | tile | loaded but **not drawn right now** (reserved for metal: garages, fences) |
 | `props.png` | 1774x887 P (indexed, alpha) | sprite sheet 4x2 | street props, see 2.2 |
-| `cars.png` | 1254x1254 P | sprite sheet 2x2 | **legacy, not loaded**. Cars are procedural |
+
 
 Mean colour of each tile matters (see section 4, `TEXMEAN`): asphalt [66,73,72], concrete [134,139,130], earth [69,76,62], roof [75,84,81], wall [120,116,105], pave [50,52,50], floor [128,128,128].
 
