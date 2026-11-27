@@ -1,16 +1,16 @@
-# Источники и ограничения
+# Sources and Limitations
 
-## Материалы проекта
-В полном пакете `docs/handoff/references/` лежат неизменённые оригиналы: исходный ZIP v73, технический аудит DOCX, два PDF, два MP4. Текст аудита продублирован в `AUDIT_V73.md` для удобства агента. Файлы игры в корне извлечены из оригинального ZIP без изменения. PDF описывают более старую версию: использовать как исторический контекст.
+## Project materials
+The full package `docs/handoff/references/` holds the unmodified originals: the original v73 ZIP, the technical audit DOCX, two PDFs, and two MP4s. The audit text is duplicated in `AUDIT_V73.md` for the agent's convenience. The game files in the root were extracted from the original ZIP without modification. The PDFs describe an older version: use them as historical context.
 
-## Технические ориентиры
-Ссылки ниже — стартовые материалы для самостоятельного изучения; не доказательство внутреннего устройства закрытых игр. Перепроверять актуальные технические детали и лицензии до применения.
+## Technical references
+The links below are starting material for independent study; they are not proof of the internals of closed games. Re-check current technical details and licenses before applying anything.
 - Cataclysm: DDA — https://github.com/CleverRaven/Cataclysm-DDA
 - OpenXRay — https://github.com/OpenXRay/xray-16
 - Suroi — https://github.com/HasangerGames/suroi
 - Recast/Detour — https://github.com/recastnavigation/recastnavigation
 - Project Zomboid — https://projectzomboid.com/blog/
-- GDC — https://www.gdcvault.com/ (поиск AI Recycling и Horizon Zero Dawn AI)
+- GDC — https://www.gdcvault.com/ (search for AI Recycling and Horizon Zero Dawn AI)
 - MDN Canvas optimization — https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Optimizing_canvas
 - OffscreenCanvas — https://web.dev/articles/offscreen-canvas
 - Canvas performance — https://web.dev/articles/canvas-performance
@@ -20,5 +20,5 @@
 - PixiJS — https://pixijs.com/
 - OpenAI Codex workflow guide — https://developers.openai.com/cookbook/examples/codex/iterating-development-workflows-with-codex
 
-## Ограничения
-Переписка представлена конспектом, не полным дословным экспортом. Новых запусков игры/тестов, нового мобильного профилирования и реализации обновлений при сборке пакета не было. Данные о v73 взяты из приложенного аудита и прежнего обсуждения; проверять по текущему коду. Закрытый код коммерческих игр не исследован напрямую. Результат отдельного Deep Research по дорожной карте не был доступен в переписке. Рекомендации по графике/архитектуре — предлагаемые, а не реализованные изменения.
+## Limitations
+The conversation is presented as a digest, not a complete verbatim export. While the package was assembled there were no new runs of the game or tests, no new mobile profiling, and no implementation of updates. The v73 data comes from the attached audit and the earlier discussion; verify it against the current code. The closed code of commercial games was not examined directly. The result of the separate Deep Research on the roadmap was not available in the conversation. The graphics/architecture recommendations are proposed, not implemented, changes.

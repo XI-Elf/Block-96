@@ -1,23 +1,23 @@
-# Визуальное направление Block-96
+# Block-96 Visual Direction
 
-## Основа
-Владелец показал два видеореференса и уточнил: «Здесь графика другая. И ориентация камеры. Но это то чего хочется видеть». Не делать вывод о точном движке по видео; не переносить угол камеры без отдельного решения. Цель обсуждения — живой, опасный, заброшенный город с атмосферой постсоветского постапокалипсиса, более реалистичными материалами и динамическим светом. Это предлагаемый художественный стандарт, который нужно подтвердить на прототипе.
+## Basis
+The owner showed two video references and clarified: "The graphics here are different. And the camera orientation. But this is what I want to see." Do not draw conclusions about the exact engine from the video; do not carry over the camera angle without a separate decision. The goal of the discussion is a living, dangerous, abandoned city with a post-apocalyptic atmosphere built on panel blocks and 2000s aesthetics, with more realistic materials and dynamic light. This is a proposed artistic standard that must be confirmed on a prototype.
 
-Оригинальные видеореференсы: `VID_20261126_204249_801.mp4`, `VID_20261126_204315_835.mp4` (в полном пакете `docs/handoff/references/`).
+The original video references: `VID_20261126_204249_801.mp4`, `VID_20261126_204315_835.mp4` (in the full package `docs/handoff/references/`).
 
-## Эталонный квартал v76
-Улица, жилой дом с интерьером, коммерческое помещение, промышленный объект. Одинаковая камера и механика до/после. Подготовить кадры день/сумерки/ночь, бой и вход в помещение. Согласовать визуальный стандарт прежде чем масштабировать на 16 районов.
+## The v76 reference quarter
+A street, a residential building with an interior, a commercial room, and an industrial object. The same camera and mechanics before/after. Prepare frames for day/dusk/night, combat, and entering a room. Agree on the visual standard before scaling it to the 16 districts.
 
-| Элемент | Что сделать | Проверка |
+| Element | What to do | Check |
 |---|---|---|
-| Материалы | Вариативные асфальт, бетон, кирпич, штукатурка, полы, износ, грязь, трещины | Нет явной плиточной повторяемости; читаемость препятствий |
-| Свет и тени | Локальные фонари, естественное затухание, перекрытие препятствиями; выразительный день/ночь | Игровая видимость не изменилась; свет не выдаёт скрытого NPC |
-| Интерьеры | Детализация по назначению комнат, мебель и предметы | Доступность проходов и взаимодействий; визуальные детали не создают неучтённую коллизию |
-| Окружение | Неравномерная растительность, мусор, следы деятельности | Детерминизм, не мешает навигации, если это декоративный слой |
-| Погода | Дождь, туман, влажность, пыль (по утверждённому стилю) | Графический бюджет, отдельные переключатели качества |
-| Бой | Вспышки, дым, попадания и обратная связь | Читаемость и отсутствие существенных просадок |
-| Анимации | Естественное движение и взаимодействие | Синхронизация игрового состояния и анимации |
-| UI | Сдержанная палитра, читаемые предметы и иконки | Мобильное управление, контраст, размеры элементов |
+| Materials | Varied asphalt, concrete, brick, plaster, floors, wear, dirt, cracks | No obvious tiling repetition; obstacles stay readable |
+| Light and shadows | Local street lamps, natural falloff, blocking by obstacles; expressive day/night | Gameplay visibility is unchanged; light does not reveal a hidden NPC |
+| Interiors | Detail by room purpose, furniture, and items | Passages and interactions stay accessible; visual details do not create unaccounted collision |
+| Surroundings | Uneven vegetation, litter, traces of activity | Deterministic; does not hinder navigation if it is a decorative layer |
+| Weather | Rain, fog, dampness, dust (per the approved style) | Graphics budget, separate quality toggles |
+| Combat | Flashes, smoke, hits, and feedback | Readability and no significant frame drops |
+| Animations | Natural movement and interaction | Gameplay state and animation stay in sync |
+| UI | A restrained palette, readable items and icons | Mobile controls, contrast, element sizes |
 
-## Технические принципы
-Статические слои кешировать по пространственным участкам с бюджетом памяти; динамические NPC, транспорт, свет и эффекты рисовать отдельно в пределах необходимости. Не применять дорогой эффект ко всему городу до профиля. Вести реестр ассетов: источник, автор, лицензия, изменения, размер и назначение. Не копировать защищённые игровые ассеты из референсов. Сохранять прежний режим рендеринга или обратимость до утверждения нового.
+## Technical principles
+Cache static layers by spatial region with a memory budget; draw dynamic NPCs, vehicles, light, and effects separately and only as needed. Do not apply an expensive effect to the whole city before profiling. Keep an asset registry: source, author, license, modifications, size, and purpose. Do not copy protected game assets from the references. Keep the previous rendering mode, or keep the change reversible, until the new one is approved.
