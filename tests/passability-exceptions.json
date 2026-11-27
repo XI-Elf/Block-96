@@ -1,0 +1,709 @@
+{
+ "about": "Documented entrance exceptions for tests/passability.test.js (fixture: harness default seed 12345, hour 12). Each entry must still fail; a fixed entry must be removed. Categories: neighbour-wall-in-front = a later-placed neighbouring wall stands < 3 m in front of the door; neighbour-wall-beside-doorway = the walk to the door stalls on a neighbouring building 8-14 px away; no-street-route = house in an area with no road within 25 m (nearest road sample is on a bridge deck or far away) or beyond the route-search window. Garage gates (kind garage_row) are checked as entries since v79; gate-blocked-by-neighbour = a building cell stands on the gate line.",
+ "fixture": {
+  "seed": 12345,
+  "hour": 12
+ },
+ "doors": [
+  {
+   "building": 7,
+   "kind": "warehouse",
+   "door": [
+    5545,
+    15468
+   ],
+   "doorM": [
+    554.5,
+    1546.8
+   ],
+   "category": "neighbour-wall-beside-doorway+no-route",
+   "detail": "doorway not passable for the player (r=3.5 px, engine collision, tried 11 approach offsets): clear gap on the wall line 35 px | no walkable route from the door to the street (nearest road 29 m away at (5280,15598)px = (5"
+  },
+  {
+   "building": 198,
+   "kind": "house",
+   "door": [
+    9013,
+    2715
+   ],
+   "doorM": [
+    901.3,
+    271.5
+   ],
+   "category": "neighbour-wall-in-front",
+   "detail": "space in front of the door (18-30 px, +-8 px sideways) is blocked by bldg@(8974,2730)px = (897.4,273)m 63x10px"
+  },
+  {
+   "building": 386,
+   "kind": "warehouse",
+   "door": [
+    5447,
+    7463
+   ],
+   "doorM": [
+    544.7,
+    746.3
+   ],
+   "category": "no-street-route",
+   "detail": "no walkable route from the door to the street (nearest road 65 m away at (5555,8106)px = (555.5,810.6)m): no path"
+  },
+  {
+   "building": 422,
+   "kind": "panel",
+   "door": [
+    8692,
+    5683
+   ],
+   "doorM": [
+    869.2,
+    568.3
+   ],
+   "category": "neighbour-wall-beside-doorway+no-route",
+   "detail": "doorway not passable for the player (r=3.5 px, engine collision, tried 11 approach offsets): clear gap on the wall line 12 px | no walkable route from the door to the street (nearest road 28 m away at (8638,5962)px = (86"
+  },
+  {
+   "building": 442,
+   "kind": "panel",
+   "door": [
+    9732,
+    5257
+   ],
+   "doorM": [
+    973.2,
+    525.7
+   ],
+   "category": "neighbour-wall-beside-doorway+no-route",
+   "detail": "doorway not passable for the player (r=3.5 px, engine collision, tried 11 approach offsets): clear gap on the wall line 13 px | no walkable route from the door to the street (nearest road 33 m away at (9998,5448)px = (99"
+  },
+  {
+   "building": 527,
+   "kind": "panel",
+   "door": [
+    15469,
+    5027
+   ],
+   "doorM": [
+    1546.9,
+    502.7
+   ],
+   "category": "neighbour-wall-beside-doorway+no-route",
+   "detail": "doorway not passable for the player (r=3.5 px, engine collision, tried 11 approach offsets): clear gap on the wall line 13 px | no walkable route from the door to the street (nearest road 40 m away at (15351,5409)px = (1"
+  },
+  {
+   "building": 539,
+   "kind": "house",
+   "door": [
+    17507,
+    7531
+   ],
+   "doorM": [
+    1750.7,
+    753.1
+   ],
+   "category": "neighbour-wall-beside-doorway+no-route",
+   "detail": "doorway not passable for the player (r=3.5 px, engine collision, tried 11 approach offsets): clear gap on the wall line 11 px | no walkable route from the door to the street (nearest road 36 m away at (17211,7328)px = (1"
+  },
+  {
+   "building": 626,
+   "kind": "house",
+   "door": [
+    21471,
+    7097
+   ],
+   "doorM": [
+    2147.1,
+    709.7
+   ],
+   "category": "neighbour-wall-in-front",
+   "detail": "space in front of the door (18-30 px, +-8 px sideways) is blocked by bldg@(21418,7080)px = (2141.8,708)m 51x10px"
+  },
+  {
+   "building": 669,
+   "kind": "house",
+   "door": [
+    23179,
+    8351
+   ],
+   "doorM": [
+    2317.9,
+    835.1
+   ],
+   "category": "neighbour-wall-in-front",
+   "detail": "space in front of the door (18-30 px, +-8 px sideways) is blocked by bldg@(23184,8350)px = (2318.4,835)m 56x10px"
+  },
+  {
+   "building": 1081,
+   "kind": "civic",
+   "door": [
+    25103,
+    12462
+   ],
+   "doorM": [
+    2510.3,
+    1246.2
+   ],
+   "category": "no-street-route",
+   "detail": "no walkable route from the door to the street (nearest road 141 m away at (23731,12772)px = (2373.1,1277.2)m): no path"
+  },
+  {
+   "building": 1081,
+   "kind": "civic",
+   "door": [
+    24913,
+    12509
+   ],
+   "doorM": [
+    2491.3,
+    1250.9
+   ],
+   "category": "no-street-route",
+   "detail": "no walkable route from the door to the street (nearest road 121 m away at (23731,12772)px = (2373.1,1277.2)m): no path"
+  },
+  {
+   "building": 1081,
+   "kind": "civic",
+   "door": [
+    24723,
+    12556
+   ],
+   "doorM": [
+    2472.3,
+    1255.6
+   ],
+   "category": "no-street-route",
+   "detail": "no walkable route from the door to the street (nearest road 101 m away at (23731,12772)px = (2373.1,1277.2)m): no path"
+  },
+  {
+   "building": 1092,
+   "kind": "house",
+   "door": [
+    24867,
+    12288
+   ],
+   "doorM": [
+    2486.7,
+    1228.8
+   ],
+   "category": "no-street-route",
+   "detail": "no walkable route from the door to the street (nearest road 122 m away at (23682,12578)px = (2368.2,1257.8)m): no path"
+  },
+  {
+   "building": 1094,
+   "kind": "house",
+   "door": [
+    25075,
+    12198
+   ],
+   "doorM": [
+    2507.5,
+    1219.8
+   ],
+   "category": "no-street-route",
+   "detail": "no walkable route from the door to the street (nearest road 144 m away at (23672,12539)px = (2367.2,1253.9)m): no path"
+  },
+  {
+   "building": 1100,
+   "kind": "house",
+   "door": [
+    24816,
+    12112
+   ],
+   "doorM": [
+    2481.6,
+    1211.2
+   ],
+   "category": "no-street-route",
+   "detail": "no walkable route from the door to the street (nearest road 121 m away at (23634,12384)px = (2363.4,1238.4)m): no path"
+  },
+  {
+   "building": 1101,
+   "kind": "house",
+   "door": [
+    24930,
+    12173
+   ],
+   "doorM": [
+    2493,
+    1217.3
+   ],
+   "category": "no-street-route",
+   "detail": "no walkable route from the door to the street (nearest road 131 m away at (23663,12501)px = (2366.3,1250.1)m): no path"
+  },
+  {
+   "building": 1108,
+   "kind": "house",
+   "door": [
+    24705,
+    12229
+   ],
+   "doorM": [
+    2470.5,
+    1222.9
+   ],
+   "category": "no-street-route",
+   "detail": "no walkable route from the door to the street (nearest road 108 m away at (23663,12501)px = (2366.3,1250.1)m): no path"
+  },
+  {
+   "building": 1116,
+   "kind": "house",
+   "door": [
+    24370,
+    12646
+   ],
+   "doorM": [
+    2437,
+    1264.6
+   ],
+   "category": "no-street-route",
+   "detail": "no walkable route from the door to the street (nearest road 65 m away at (23740,12811)px = (2374,1281.1)m): no path"
+  },
+  {
+   "building": 1169,
+   "kind": "house",
+   "door": [
+    13897,
+    14171
+   ],
+   "doorM": [
+    1389.7,
+    1417.1
+   ],
+   "category": "neighbour-wall-beside-doorway",
+   "detail": "doorway not passable for the player (r=3.5 px, engine collision, tried 11 approach offsets): clear gap on the wall line 11 px"
+  },
+  {
+   "building": 1285,
+   "kind": "panel",
+   "door": [
+    15678,
+    13165
+   ],
+   "doorM": [
+    1567.8,
+    1316.5
+   ],
+   "category": "neighbour-wall-beside-doorway+no-route",
+   "detail": "doorway not passable for the player (r=3.5 px, engine collision, tried 11 approach offsets): clear gap on the wall line 13 px | no walkable route from the door to the street (nearest road 29 m away at (15649,12878)px = ("
+  },
+  {
+   "building": 1316,
+   "kind": "house",
+   "door": [
+    12820,
+    17418
+   ],
+   "doorM": [
+    1282,
+    1741.8
+   ],
+   "category": "neighbour-wall-in-front",
+   "detail": "space in front of the door (18-30 px, +-8 px sideways) is blocked by bldg@(12820,17400)px = (1282,1740)m 70x10px"
+  },
+  {
+   "building": 1339,
+   "kind": "house",
+   "door": [
+    13582,
+    16856
+   ],
+   "doorM": [
+    1358.2,
+    1685.6
+   ],
+   "category": "neighbour-wall-in-front",
+   "detail": "space in front of the door (18-30 px, +-8 px sideways) is blocked by bldg@(13568,16870)px = (1356.8,1687)m 54x10px"
+  },
+  {
+   "building": 1545,
+   "kind": "house",
+   "door": [
+    25191,
+    13011
+   ],
+   "doorM": [
+    2519.1,
+    1301.1
+   ],
+   "category": "no-street-route",
+   "detail": "no walkable route from the door to the street (nearest road 145 m away at (23750,12850)px = (2375,1285)m): no path"
+  },
+  {
+   "building": 1546,
+   "kind": "house",
+   "door": [
+    24894,
+    12847
+   ],
+   "doorM": [
+    2489.4,
+    1284.7
+   ],
+   "category": "no-street-route",
+   "detail": "no walkable route from the door to the street (nearest road 114 m away at (23750,12850)px = (2375,1285)m): no path"
+  },
+  {
+   "building": 1554,
+   "kind": "house",
+   "door": [
+    25026,
+    12965
+   ],
+   "doorM": [
+    2502.6,
+    1296.5
+   ],
+   "category": "no-street-route",
+   "detail": "no walkable route from the door to the street (nearest road 128 m away at (23750,12850)px = (2375,1285)m): no path"
+  },
+  {
+   "building": 1555,
+   "kind": "house",
+   "door": [
+    25093,
+    12764
+   ],
+   "doorM": [
+    2509.3,
+    1276.4
+   ],
+   "category": "no-street-route",
+   "detail": "no walkable route from the door to the street (nearest road 135 m away at (23750,12850)px = (2375,1285)m): no path"
+  },
+  {
+   "building": 1564,
+   "kind": "house",
+   "door": [
+    24874,
+    13046
+   ],
+   "doorM": [
+    2487.4,
+    1304.6
+   ],
+   "category": "no-street-route",
+   "detail": "no walkable route from the door to the street (nearest road 114 m away at (23750,12850)px = (2375,1285)m): no path"
+  },
+  {
+   "building": 1566,
+   "kind": "house",
+   "door": [
+    24433,
+    12925
+   ],
+   "doorM": [
+    2443.3,
+    1292.5
+   ],
+   "category": "no-street-route",
+   "detail": "no walkable route from the door to the street (nearest road 69 m away at (23750,12850)px = (2375,1285)m): no path"
+  },
+  {
+   "building": 1574,
+   "kind": "house",
+   "door": [
+    24124,
+    12994
+   ],
+   "doorM": [
+    2412.4,
+    1299.4
+   ],
+   "category": "no-street-route",
+   "detail": "no walkable route from the door to the street (nearest road 40 m away at (23750,12850)px = (2375,1285)m): no path"
+  },
+  {
+   "building": 1578,
+   "kind": "house",
+   "door": [
+    24629,
+    12913
+   ],
+   "doorM": [
+    2462.9,
+    1291.3
+   ],
+   "category": "no-street-route",
+   "detail": "no walkable route from the door to the street (nearest road 88 m away at (23750,12850)px = (2375,1285)m): no path"
+  },
+  {
+   "building": 1585,
+   "kind": "house",
+   "door": [
+    24256,
+    12815
+   ],
+   "doorM": [
+    2425.6,
+    1281.5
+   ],
+   "category": "no-street-route",
+   "detail": "no walkable route from the door to the street (nearest road 51 m away at (23750,12850)px = (2375,1285)m): no path"
+  },
+  {
+   "building": 1593,
+   "kind": "house",
+   "door": [
+    24641,
+    13820
+   ],
+   "doorM": [
+    2464.1,
+    1382
+   ],
+   "category": "neighbour-wall-in-front",
+   "detail": "space in front of the door (18-30 px, +-8 px sideways) is blocked by bldg@(24566,13810)px = (2456.6,1381)m 70x10px"
+  },
+  {
+   "building": 1602,
+   "kind": "house",
+   "door": [
+    25134,
+    12938
+   ],
+   "doorM": [
+    2513.4,
+    1293.8
+   ],
+   "category": "no-street-route",
+   "detail": "no walkable route from the door to the street (nearest road 139 m away at (23750,12850)px = (2375,1285)m): no path"
+  },
+  {
+   "building": 1603,
+   "kind": "house",
+   "door": [
+    24226,
+    13081
+   ],
+   "doorM": [
+    2422.6,
+    1308.1
+   ],
+   "category": "no-street-route",
+   "detail": "no walkable route from the door to the street (nearest road 53 m away at (23750,12850)px = (2375,1285)m): no path"
+  },
+  {
+   "building": 1604,
+   "kind": "house",
+   "door": [
+    24332,
+    13034
+   ],
+   "doorM": [
+    2433.2,
+    1303.4
+   ],
+   "category": "no-street-route",
+   "detail": "no walkable route from the door to the street (nearest road 61 m away at (23750,12850)px = (2375,1285)m): no path"
+  },
+  {
+   "building": 1606,
+   "kind": "house",
+   "door": [
+    24800,
+    12912
+   ],
+   "doorM": [
+    2480,
+    1291.2
+   ],
+   "category": "no-street-route",
+   "detail": "no walkable route from the door to the street (nearest road 105 m away at (23750,12850)px = (2375,1285)m): no path"
+  },
+  {
+   "building": 1614,
+   "kind": "house",
+   "door": [
+    24020,
+    13107
+   ],
+   "doorM": [
+    2402,
+    1310.7
+   ],
+   "category": "no-street-route",
+   "detail": "no walkable route from the door to the street (nearest road 37 m away at (23750,12850)px = (2375,1285)m): no path"
+  },
+  {
+   "building": 1623,
+   "kind": "house",
+   "door": [
+    24469,
+    12799
+   ],
+   "doorM": [
+    2446.9,
+    1279.9
+   ],
+   "category": "no-street-route",
+   "detail": "no walkable route from the door to the street (nearest road 72 m away at (23750,12850)px = (2375,1285)m): no path"
+  },
+  {
+   "building": 1625,
+   "kind": "house",
+   "door": [
+    25060,
+    13067
+   ],
+   "doorM": [
+    2506,
+    1306.7
+   ],
+   "category": "no-street-route",
+   "detail": "no walkable route from the door to the street (nearest road 133 m away at (23750,12850)px = (2375,1285)m): no path"
+  },
+  {
+   "building": 1636,
+   "kind": "house",
+   "door": [
+    24946,
+    12744
+   ],
+   "doorM": [
+    2494.6,
+    1274.4
+   ],
+   "category": "no-street-route",
+   "detail": "no walkable route from the door to the street (nearest road 120 m away at (23750,12850)px = (2375,1285)m): no path"
+  },
+  {
+   "building": 1787,
+   "kind": "panel",
+   "door": [
+    15059,
+    2775
+   ],
+   "doorM": [
+    1505.9,
+    277.5
+   ],
+   "category": "neighbour-wall-in-front",
+   "detail": "space in front of the door (18-30 px, +-8 px sideways) is blocked by wall@(15075,2753)px = (1507.5,275.3)m 2x2px"
+  },
+  {
+   "building": 92,
+   "kind": "garage_row",
+   "door": [
+    9731,
+    13187
+   ],
+   "doorM": [
+    973.1,
+    1318.7
+   ],
+   "category": "gate-blocked-by-neighbour",
+   "detail": "doorway not passable for the player (r=3.5 px, engine collision, tried 11 approach offsets): clear gap on the wall line 1 px | no walkable route from the door to the street (nearest road 26 m away at (9702,12928)px = (97"
+  },
+  {
+   "building": 92,
+   "kind": "garage_row",
+   "door": [
+    9732,
+    13214
+   ],
+   "doorM": [
+    973.2,
+    1321.4
+   ],
+   "category": "gate-blocked-by-neighbour",
+   "detail": "doorway not passable for the player (r=3.5 px, engine collision, tried 11 approach offsets): clear gap on the wall line 1 px | no walkable route from the door to the street (nearest road 20 m away at (9531,13236)px = (95"
+  },
+  {
+   "building": 409,
+   "kind": "garage_row",
+   "door": [
+    7241,
+    7363
+   ],
+   "doorM": [
+    724.1,
+    736.3
+   ],
+   "category": "no-street-route",
+   "detail": "no walkable route from the door to the street (nearest road 44 m away at (7314,6926)px = (731.4,692.6)m): no path"
+  },
+  {
+   "building": 409,
+   "kind": "garage_row",
+   "door": [
+    7275,
+    7370
+   ],
+   "doorM": [
+    727.5,
+    737
+   ],
+   "category": "no-street-route",
+   "detail": "no walkable route from the door to the street (nearest road 44 m away at (7353,6934)px = (735.3,693.4)m): no path"
+  },
+  {
+   "building": 409,
+   "kind": "garage_row",
+   "door": [
+    7309,
+    7377
+   ],
+   "doorM": [
+    730.9,
+    737.7
+   ],
+   "category": "no-street-route",
+   "detail": "no walkable route from the door to the street (nearest road 44 m away at (7393,6942)px = (739.3,694.2)m): no path"
+  },
+  {
+   "building": 1051,
+   "kind": "garage_row",
+   "door": [
+    19185,
+    10738
+   ],
+   "doorM": [
+    1918.5,
+    1073.8
+   ],
+   "category": "no-street-route",
+   "detail": "no walkable route from the door to the street (nearest road 90 m away at (19064,9842)px = (1906.4,984.2)m): no path"
+  },
+  {
+   "building": 1051,
+   "kind": "garage_row",
+   "door": [
+    19284,
+    10726
+   ],
+   "doorM": [
+    1928.4,
+    1072.6
+   ],
+   "category": "no-street-route",
+   "detail": "no walkable route from the door to the street (nearest road 90 m away at (19183,9827)px = (1918.3,982.7)m): no path"
+  },
+  {
+   "building": 1076,
+   "kind": "garage_row",
+   "door": [
+    19251,
+    10382
+   ],
+   "doorM": [
+    1925.1,
+    1038.2
+   ],
+   "category": "no-street-route",
+   "detail": "no walkable route from the door to the street (nearest road 56 m away at (19183,9827)px = (1918.3,982.7)m): no path"
+  },
+  {
+   "building": 1076,
+   "kind": "garage_row",
+   "door": [
+    19286,
+    10377
+   ],
+   "doorM": [
+    1928.6,
+    1037.7
+   ],
+   "category": "no-street-route",
+   "detail": "no walkable route from the door to the street (nearest road 56 m away at (19223,9822)px = (1922.3,982.2)m): no path"
+  }
+ ]
+}

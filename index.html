@@ -2,8 +2,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Block-96</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<link rel="stylesheet" href="assets/fonts/fonts.css">
 <style>
   /* Один осознанный тёмный вид: неоновая ночь над ржавым асфальтом. HUD по углам, центр — игра. */
   :root {
@@ -180,7 +179,7 @@
   <div class="card">
     <div class="ctl">
       <kbd>W A S D</kbd><span>движение</span><kbd>ЛКМ</kbd><span>выстрел</span><kbd>R</kbd><span>перезарядка</span>
-      <kbd>1 2 3</kbd><span>оружие</span><kbd>E</kbd><span>обыск (держать)</span><kbd>V</kbd><span>приклад</span><kbd>ПКМ</kbd><span>осмотр (держать)</span>
+      <kbd>1 2 3</kbd><span>оружие</span><kbd>E</kbd><span>обыск, взлом запертой двери или ворот (держать, шумно)</span><kbd>V</kbd><span>приклад</span><kbd>ПКМ</kbd><span>осмотр (держать)</span>
       <kbd>M</kbd><span>карта города</span><kbd>Shift</kbd><span>бег</span><kbd>Q</kbd><span>Адреналин</span><kbd>Tab · C</kbd><span>инвентарь · персонаж</span><kbd>H</kbd><span>закрыть подсказку</span>
     </div>
     <p class="muted">Прицел — линия до крестика. Дальность и падение урона зависят от оружия: смотри «эфф.» и «предел» в углу экрана. Стой на месте и не спамь, чтобы разброс был меньше.</p>
@@ -213,6 +212,7 @@
 
 <script>window.B96_ASSET_BASE = "assets/";</script>
 <script src="config.js"></script>
+<script src="modules/dom.js"></script>
 <script src="modules/vehicles-phys.js"></script>
 <script src="modules/vehicles-draw.js"></script>
 <script src="world15.js"></script>
@@ -237,4 +237,5 @@
 <script src="modules/start.js"></script>
 <script src="modules/map.js"></script>
 <script src="modules/shop.js"></script>
+<script src="modules/save.js"></script>
 <script src="game.js"></script>

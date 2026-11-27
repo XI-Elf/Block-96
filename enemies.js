@@ -270,7 +270,9 @@
     }
     return best;
   }
+  const MAX_SQUAD = 3; // user rule: raid groups (squads, gangs, night patrols) have at most three members
   function spawnSquad(s, API, zone, type, n, near, radius) {
+    n = Math.min(n, MAX_SQUAD);
     const free = freeFn(s, API), d = TYPES[type];
     const sq = { id: s.nextId++, type, zone: zone ? zone.id : null, home: null, route: [], ri: 0, members: [], known: null, size0: n, rot: API.rr(s, 0, TAU), post: false };
     for (let i = 0; i < n; i++) {
@@ -395,7 +397,7 @@
       const tl = templatesFor(s, E, z.id, day);
       for (let k = 0; k < 20 && tl.length && c.armed < tg.armed && made < budget && s.enemies.length < MAX_ENEMIES; k++) {
         const i = (E.cyc[z.id] = ((E.cyc[z.id] == null ? API.ri(s, 0, tl.length - 1) : E.cyc[z.id]) + 1) % tl.length), [t, n0, w] = tl[i], def = TYPES[t];
-        let n = n0; if (def.fac === 'street' && def.role === 'gun') n = API.ri(s, 3, 5); // "Shakal" street gangs: 3-5
+        let n = n0; if (def.fac === 'street' && def.role === 'gun') n = API.ri(s, 3, 3); // "Shakal" street gangs: 3-5
         const room = tg.armed - c.armed; if (n > room && room >= 1 && (n > 3 || room < n)) n = Math.max(def.fac === 'admin' ? 3 : 1, room); // PPS patrols are always triples
         const sq = place(spawnSquad(s, API, z, t, n)); if (!sq) { if (popIn) break; continue; }
         sq.when = w || def.when || null; c.armed += sq.members.length; made++;
@@ -435,7 +437,7 @@
         let tl = templatesFor(s, E, z.id, false).filter(q => { const f = TYPES[q[0]].fac; return f !== s.playerFac && f !== 'admin' && f !== 'coalition'; });
         if (!tl.length) tl = Object.keys(TYPES).filter(t => TYPES[t].fac === 'street' && TYPES[t].role === 'gun').map(t => [t, 3]);
         if (!tl.length) continue;
-        const [t, n0] = tl[API.ri(s, 0, tl.length - 1)], def = TYPES[t]; let n = n0; if (def.fac === 'street' && def.role === 'gun') n = API.ri(s, 3, 5);
+        const [t, n0] = tl[API.ri(s, 0, tl.length - 1)], def = TYPES[t]; let n = n0; if (def.fac === 'street' && def.role === 'gun') n = API.ri(s, 3, 3);
         const sq = spawnSquad(s, API, z, t, n); if (!sq) continue; // spawned in the district, then carried to the ring point (spawnEnemy refuses 'near' spots under 9 m)
         sq.when = 'night'; sq.zone = z.id; const leader = s.enemies.find(q => q.id === sq.members[0]);
         if (leader) { leader.x = pt.x; leader.y = pt.y; sq.home = { x: pt.x, y: pt.y }; sq.homeDoor = false; sq.members.forEach((id, i) => { const m = s.enemies.find(q => q.id === id); if (m && i > 0) { const o = randFree(s, API, free, pt.x, pt.y, 24, 52, null, 8); if (o) { m.x = o.x; m.y = o.y; } } if (m) { m.path = null; m.lx = m.x; m.ly = m.y; } });

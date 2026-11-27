@@ -3,6 +3,7 @@
 // Подключать ПОСЛЕ world15.js (нужны полигоны районов), ДО game.js.
 (function () {
   'use strict';
+  const { html: hx, setHtml, h: el_ } = window.WL_DOM;
   const KEY = 'b96.home';
   const DEFAULT_ID = 'pavlov_yar';
 
@@ -129,12 +130,12 @@
     if (!document.getElementById('gp-css')) { const st = document.createElement('style'); st.id = 'gp-css'; st.textContent = CSS; document.head.appendChild(st); }
     const W = window.B96_WORLD, polys = {};
     if (W && W.districts) for (const z of W.districts) { polys[z.id] = z.poly; if (byId(z.id)) byId(z.id).name = z.name; }
-    el.innerHTML = '<div class="hg"><span class="homeh" style="margin:0">Персонаж</span><button type="button" class="hg-b" data-g="male">Мужчина</button><button type="button" class="hg-b" data-g="female">Женщина</button></div>' +
-      '<div class="gp"><div class="gp-list" role="listbox" aria-label="Банда"></div><div><div class="gp-info" aria-live="polite"></div><div class="gp-map"><canvas aria-label="Район появления"></canvas></div></div></div>';
+    el.replaceChildren(el_('div', { class: 'hg' }, el_('span', { class: 'homeh', style: { margin: '0' } }, 'Персонаж'), el_('button', { type: 'button', class: 'hg-b', 'data-g': 'male' }, 'Мужчина'), el_('button', { type: 'button', class: 'hg-b', 'data-g': 'female' }, 'Женщина')),
+      el_('div', { class: 'gp' }, el_('div', { class: 'gp-list', role: 'listbox', 'aria-label': 'Банда' }), el_('div', null, el_('div', { class: 'gp-info', 'aria-live': 'polite' }, ), el_('div', { class: 'gp-map' }, el_('canvas', { 'aria-label': 'Район появления' })))));
     const gbs = [...el.querySelectorAll('.hg-b')], syncG = () => gbs.forEach((b) => b.classList.toggle('on', b.dataset.g === gender));
     gbs.forEach((b) => b.addEventListener('click', () => { setGender(b.dataset.g); syncG(); })); syncG();
     const list = el.querySelector('.gp-list'), info = el.querySelector('.gp-info'), cv = el.querySelector('canvas');
-    list.innerHTML = GANGS.map((g) => `<button type="button" class="gp-row" role="option" data-id="${g.id}"><b>${g.name}</b><small>${g.dist ? distName(g.dist) : 'случайный незахваченный район'}</small></button>`).join('');
+    list.replaceChildren(...GANGS.map((g) => el_('button', { type: 'button', class: 'gp-row', role: 'option', 'data-id': g.id }, el_('b', null, g.name), el_('small', null, g.dist ? distName(g.dist) : 'случайный незахваченный район'))));
     const rows = [...list.children];
     function draw() {
       const r = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1, w = Math.max(1, Math.round(r.width * dpr)), h = Math.max(1, Math.round(r.height * dpr));
@@ -152,11 +153,11 @@
     }
     function describe() {
       const g = gangById(gang), mate = g.mate ? gangById(g.mate) : null;
-      const where = g.dist ? `<u>${distName(g.dist)}</u>` : 'один из семи незахваченных районов (случайный)';
+      const where = g.dist ? hx`<u>${distName(g.dist)}</u>` : 'один из семи незахваченных районов (случайный)';
       const rel = g.id === 'none'
-        ? '<em>Тебе враждебны все: банды, уличные шайки, собаки.</em> Никто не прикроет. ППС и Коалиция трогают только за нарушение порядка.'
-        : `<em>Свои:</em> «${g.name}» не враждебны, пока ты их не бьёшь.${mate ? ` <em>В районе также «${mate.name}»: они враждебны.` + '</em>' : ''} Остальные банды, шайки и собаки враждебны.`;
-      info.innerHTML = `<b>${g.name.toUpperCase()}</b><br>Появление: ${where}.<br>Одежда: ${g.look}.<br>Снаряжение: ${g.gear}.<br>${rel}<br>ППС (Администрация) и охрана Коалиции в Речном Порту начинают стрелять только при нарушении порядка: оружие в руках после окрика, выстрел в их районе, нападение на них или на мирных.<br><em>Старт рейда: 00:00.</em>`;
+        ? hx`<em>Тебе враждебны все: банды, уличные шайки, собаки.</em> Никто не прикроет. ППС и Коалиция трогают только за нарушение порядка.`
+        : hx`<em>Свои:</em> «${g.name}» не враждебны, пока ты их не бьёшь.${mate ? hx` <em>В районе также «${mate.name}»: они враждебны.</em>` : ''} Остальные банды, шайки и собаки враждебны.`;
+      setHtml(info, hx`<b>${g.name.toUpperCase()}</b><br>Появление: ${where}.<br>Одежда: ${g.look}.<br>Снаряжение: ${g.gear}.<br>${rel}<br>ППС (Администрация) и охрана Коалиции в Речном Порту начинают стрелять только при нарушении порядка: оружие в руках после окрика, выстрел в их районе, нападение на них или на мирных.<br><em>Старт рейда: 00:00.</em>`);
       rows.forEach((r) => { const on = r.dataset.id === gang; r.classList.toggle('on', on); r.setAttribute('aria-selected', on); });
     }
     function pick(id) { setGang(id); describe(); draw(); if (opts.onChange) opts.onChange(id); }
@@ -164,7 +165,7 @@
     const ro = window.ResizeObserver ? new ResizeObserver(draw) : null; if (ro) ro.observe(cv);
     window.addEventListener('resize', draw);
     describe(); requestAnimationFrame(draw);
-    return { refresh() { describe(); draw(); }, destroy() { if (ro) ro.disconnect(); window.removeEventListener('resize', draw); el.innerHTML = ''; } };
+    return { refresh() { describe(); draw(); }, destroy() { if (ro) ro.disconnect(); window.removeEventListener('resize', draw); el.replaceChildren(); } };
   }
   const mount = mountGang; // совместимость со старым именем
 

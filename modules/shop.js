@@ -2,6 +2,7 @@
 // Чистая логика (buy/sell/…) без DOM и без случайности; UI — mount()/open() ниже. Все цены — стартовые догадки для теста.
 (function () {
   'use strict';
+  const { html: hx, setHtml } = window.WL_DOM;
   const CUR = 'token';          // id предмета-валюты (ITEMS.token, см. NOTE.md: сейчас его нет в config.js)
   const SELL_RATIO = 0.35;      // как в hub/economy.json: разрыв покупка/продажа ≈ 2,9×, чтобы нельзя было крутить прибыль
   // Покупка: id, pack — сколько штук за одну покупку (патроны пачкой), price — жетонов за пачку.
@@ -61,17 +62,17 @@
   const NAME = (id) => ((hooks && hooks.C && hooks.C.ITEMS[id]) || { name: id }).name;
   function html(save) {
     const t = purse(save);
-    const brows = BUY.map((r) => `<tr><td>${NAME(r.id)}${r.pack > 1 ? `<small>пачка ${r.pack}</small>` : ''}</td><td class="num">${have(save, r.id)}</td><td class="num">${r.price}</td><td class="act"><button class="ghost" data-sh="buy" data-id="${r.id}" ${t < r.price ? 'disabled' : ''}>Купить</button></td></tr>`).join('');
-    const bwrows = BUYW.map((r) => `<tr><td>${(hooks && hooks.C && hooks.C.WEAPONS && hooks.C.WEAPONS[r.id] || { name: r.id }).name}</td><td class="num"></td><td class="num">${r.price}</td><td class="act"><button class="ghost" data-sh="buyw" data-id="${r.id}" ${t < r.price ? 'disabled' : ''}>Купить</button></td></tr>`).join('');
+    const brows = BUY.map((r) => hx`<tr><td>${NAME(r.id)}${r.pack > 1 ? hx`<small>пачка ${r.pack}</small>` : ''}</td><td class="num">${have(save, r.id)}</td><td class="num">${r.price}</td><td class="act"><button class="ghost" data-sh="buy" data-id="${r.id}" ${t < r.price ? 'disabled' : ''}>Купить</button></td></tr>`);
+    const bwrows = BUYW.map((r) => hx`<tr><td>${(hooks && hooks.C && hooks.C.WEAPONS && hooks.C.WEAPONS[r.id] || { name: r.id }).name}</td><td class="num"></td><td class="num">${r.price}</td><td class="act"><button class="ghost" data-sh="buyw" data-id="${r.id}" ${t < r.price ? 'disabled' : ''}>Купить</button></td></tr>`);
     const sids = Object.keys(save.stash.items).filter((id) => have(save, id) > 0 && sellPrice(id, 1) > 0);
-    const srows = sids.map((id) => { const st = (buyRow(id) || { pack: 1 }).pack, n = Math.min(st, have(save, id)); return `<tr><td>${NAME(id)}</td><td class="num">${have(save, id)}</td><td class="num">${sellPrice(id, n)}${n > 1 ? `<small>за ${n}</small>` : ''}</td><td class="act"><button class="ghost" data-sh="sell" data-id="${id}">Продать ${n > 1 ? n : ''}</button> <button class="ghost" data-sh="sellall" data-id="${id}">Все</button></td></tr>`; }).join('');
-    const swrows = save.stash.weapons.map((w, i) => `<tr><td>${(hooks && hooks.C && hooks.C.WEAPONS && hooks.C.WEAPONS[w.id] || { name: w.id }).name}</td><td class="num"></td><td class="num">${sellWPrice(w)}</td><td class="act"><button class="ghost" data-sh="sellw" data-i="${i}" ${save.stash.weapons.length < 2 ? 'disabled title="Последний ствол не продаётся"' : ''}>Продать</button></td></tr>`).join('');
-    return `<h2>Торговец <small>Esc — закрыть</small></h2>
+    const srows = sids.map((id) => { const st = (buyRow(id) || { pack: 1 }).pack, n = Math.min(st, have(save, id)); return hx`<tr><td>${NAME(id)}</td><td class="num">${have(save, id)}</td><td class="num">${sellPrice(id, n)}${n > 1 ? hx`<small>за ${n}</small>` : ''}</td><td class="act"><button class="ghost" data-sh="sell" data-id="${id}">Продать ${n > 1 ? n : ''}</button> <button class="ghost" data-sh="sellall" data-id="${id}">Все</button></td></tr>`; });
+    const swrows = save.stash.weapons.map((w, i) => hx`<tr><td>${(hooks && hooks.C && hooks.C.WEAPONS && hooks.C.WEAPONS[w.id] || { name: w.id }).name}</td><td class="num"></td><td class="num">${sellWPrice(w)}</td><td class="act"><button class="ghost" data-sh="sellw" data-i="${i}" ${save.stash.weapons.length < 2 ? hx`disabled title="Последний ствол не продаётся"` : ''}>Продать</button></td></tr>`);
+    return hx`<h2>Торговец <small>Esc — закрыть</small></h2>
       <p class="muted">Жетоны метро: <b style="color:var(--amber)" id="shopTok">${t}</b>. Берёт лишнее за треть цены. Жетоны и всё на складе остаются твоими, даже если погибнешь в рейде: пропадает только то, что было при тебе.</p>
       <h3>Купить <span>цена · жетонов</span></h3><table><thead><tr><th>Товар</th><th class="num">Склад</th><th class="num">Цена</th><th></th></tr></thead><tbody>${brows}${bwrows}</tbody></table>
-      <h3>Продать <span>со склада</span></h3><table><tbody>${srows || '<tr><td class="muted">Нечего продавать.</td></tr>'}${swrows}</tbody></table>`;
+      <h3>Продать <span>со склада</span></h3><table><tbody>${srows.length ? srows : hx`<tr><td class="muted">Нечего продавать.</td></tr>`}${swrows}</tbody></table>`;
   }
-  function render() { if (el && hooks) { const sc = el.scrollTop; el.innerHTML = html(hooks.save()); el.scrollTop = sc; } }
+  function render() { if (el && hooks) { const sc = el.scrollTop; setHtml(el, html(hooks.save())); el.scrollTop = sc; } }
   function act(b) {
     const save = hooks.save(), d = b.dataset; let r;
     if (d.sh === 'buy') r = buy(save, d.id); else if (d.sh === 'buyw') r = buyWeapon(save, d.id);

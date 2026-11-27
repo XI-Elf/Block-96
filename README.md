@@ -55,3 +55,54 @@ Reference: the player (hit circle r 12 px) is ~0.9 m of effective width, so abou
 
 ## v62
 - Dense night: night table x1.5 from level 1 (no home discount), patrols spawn 55-110 m from the player out of sight and head to them (`nightPressure` in `enemies.js`), cap 760 mobs. City map on M (`modules/map.js`). Wording cleanup: Ukrainian city, panel blocks, 2000s look.
+
+## Saves (v76)
+`modules/save.js` (`WL_SAVE`) owns the save format. The localStorage key stays `wastland.save.v1` (historical name, do not change).
+- Current format is `v: 2` (adds `meta: {rev, savedAt}`). Migrations are step-by-step (`MIGRATIONS[n]` turns vN into vN+1); a v1 save loads, is normalised and is written back as v2 on the next save.
+- Normalisation drops unknown item/weapon ids and clamps numbers; the untouched original text is kept under `<key>.premigrate`.
+- Every write first moves the previous valid save to `<key>.bak`, then reads the value back to verify it.
+- An unreadable save is copied to `<key>.corrupt` and the `.bak` is tried; a save written by a newer build switches writing off (never overwritten).
+- Storage failures (quota, private mode, verify mismatch) show an in-game toast instead of being swallowed.
+- Rule kept: the stash survives death and evacuation (`WL_SAVE.applyRaid`, covered by `tests/save-dom.test.js`).
+- Downgrading to a build older than v76 makes it treat a v2 save as unreadable; use the `.bak` key in that case.
+
+## Safe DOM (v76)
+Data never reaches `innerHTML` as a plain string. Use `WL_DOM` (`modules/dom.js`): `html` tagged templates escape every interpolated value, `setHtml(el, fragment)` is the only writer, `h(tag, attrs, ...kids)` builds elements. `tests/save-dom.test.js` fails on any other `innerHTML`/`outerHTML`/`insertAdjacentHTML`/`document.write` and on any `http(s)` URL in `index.html`.
+
+## Fonts and privacy (v76)
+Chakra Petch (500/600/700, Latin) and JetBrains Mono (500/700, Latin + Cyrillic) are self-hosted in `assets/fonts/` (SIL OFL 1.1, licence texts next to the files). The page makes no third-party requests, so no visitor IP leaves the origin. Chakra Petch has no Cyrillic glyphs; Cyrillic text in the display face falls back to the system UI font (same as before).
+
+## Control-scene URL parameters (v76)
+`?seed=N` fixes the world seed (also fixes the snow flurries), `?at=x,y` places the player at that point in metres at raid start (the caller must choose a free spot), `?hour=H` was already supported. Without parameters nothing changes.
+
+## Baseline (v76, measured)
+Environment: cloud container, 4 vCPU Xeon 2.1 GHz, 16 GB RAM, Node 22.23.5, headless Chromium 158 with software rendering (SwiftShader, no GPU). **These are not mobile or GPU numbers.** Nothing here measures a real phone.
+
+| Metric | Result | How |
+|---|---|---|
+| World generation (`newWorld`, 3 seeds x 2 rounds) | 1.7-2.5 s | `node --expose-gc tests/profile-boot.js` |
+| First simulation tick after world | 0.43-0.48 s | same |
+| Map size | 1837 buildings, ~503k wall segments, ~7.7k containers | same |
+| Dense night sim, level 8 (extras test) | ~3.3 ms/tick (budget 6) | `node tests/extras.test.js` |
+| Browser boot to first frame | 1.2 s | `node tests/profile-browser.js` (needs `python3 -m http.server 8765` in the repo root; `B96_CHROMIUM` selects a browser binary) |
+| Browser frame interval, seed 31337, ~224 frames | P50 33.3 ms, P95 50 ms, P99 50.1 ms | same (software canvas, so not representative) |
+| JS heap after boot | 142 MiB used / 204 MiB total | same |
+| Console errors during the run | 0 | same |
+
+Release targets in `docs/BLOCK96_DEVELOPMENT_PLAN.md` (30 FPS weak device, 60 FPS fast device) are goals, not results. Real-device P50/P95/P99 are still unmeasured (plan item v75.1).
+
+## Tests
+`node tests/behavior.test.js`, `node tests/extras.test.js`, `node tests/gangs.test.js`, `node tests/save-dom.test.js`, `node tests/passability.test.js` (~1.5 min), `node tests/districts-nav.test.js`, `node tests/stall.test.js` (~1.5 min), `node tests/perception.test.js`. Known failing check: gangs "vyshka: night, hostile armed within 100 m >= 12 (got 11)", a consequence of the 3-member group limit; the test expectation has not been changed.
+
+## Passability (v77)
+`node tests/passability.test.js` (about 1.5 min; `REPORT=file.json` writes details). Fixture: harness default seed 12345, hour 12.
+- Bridges: all 7 are passable on foot and by sedan and truck in both directions. `sim.js` `bridgeCarve` removes the water mask under every deck (deck width + 1 cell each side, ends extended by 24 m); M5 was not carved over most of its length and M7 ended in water.
+- Entrance doors are 1.2 m wide (`ENTRY_W` in `modules/interiors_sim.js`, was 1.0 m). Tight doors: 634 -> 0.
+- A house door now picks the nearest road-side face whose front strip is not an already placed neighbour's wall (`frontClear`). Not passable 22 -> 7, blocked in front 7 -> 7, no street route 47 -> 33.
+- The remaining 41 doors are listed in `tests/passability-exceptions.json` with a category. The test fails on any new failure and on any exception that no longer fails. Most are houses in the roadless area east of the river (nearest road sample is on the M6 deck, 40-145 m away); the rest stand within 1 m of a neighbour's wall.
+- Test changes (not weakened): the on-foot walk time limit scales with deck length (M5 is 343 m, the old fixed 60 s could not finish at walking speed), car time limit likewise, and the car start uses the nearest free approach point (a house stands 22 m before M7's south end).
+- 245 garage rows have no entry door; whether that is intended is not confirmed.
+
+## Garages and forced entry (v79)
+Garage rows were never doorless: each box has its own roll gate (1025 gates, about 27% locked, about 35% open at start). The earlier "245 rows without an entry door" was the test not counting gates as entries; `tests/passability.test.js` now checks gates too (9 gates documented as exceptions).
+Locked exterior doors and gates can be forced: hold E next to them, 3 s for a door and 6 s for a gate (`WL_HOUSES_SIM.pryTick`). It makes noise every second (heard like a kicked-in door, 45 m) and is cancelled by releasing E or walking away. Shooting the lock still works. `tests/pry.test.js`.

@@ -8,3 +8,6 @@
 - Road rendering: pavement of all chunks is drawn first, then asphalt (no overlapping seams).
 - Lamp rule from v72 applies to the new roads.
 - Tests: gangs 139-142/142, behavior 55-60/60 (map-dependent night squad and warning-aim cases).
+
+# v74
+- Raid groups (squads, street gangs, night patrols) now have at most 3 members (`MAX_SQUAD` in enemies.js; street gangs were 3-5). Group templates and the per-district night targets are unchanged.
